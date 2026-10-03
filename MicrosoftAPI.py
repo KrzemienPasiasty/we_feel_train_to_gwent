@@ -11,14 +11,13 @@ try:
     from tag import Tag
     import data
 except ImportError:
-    try:
-        from we_feel_train_to_gwent.task import Task
-        from we_feel_train_to_gwent.tag import Tag
-        from we_feel_train_to_gwent import data
-    except ImportError:
-        Task = None
-        Tag = None
-        data = None
+    Task = None
+    Tag = None
+    data = None
+
+# Configuration variable: controls whether tags are read/created or left empty
+INCLUDE_TAGS: bool = True
+READ_TAGS: bool = True
 
 GRAPH_API_BASE = "https://graph.microsoft.com/v1.0"
 SCOPES = ["Tasks.Read", "User.Read"]
@@ -186,8 +185,8 @@ def fetch_todo_tasks(access_token: str) -> List[Dict[str, Any]]:
         if resp.status_code != 200:
             print(f"Warning: Failed to fetch To Do lists ({resp.status_code}): {resp.text}")
             break
-        data = resp.json()
-        task_lists = data.get("value", [])
+        data_json = resp.json()
+        task_lists = data_json.get("value", [])
 
         for tl in task_lists:
             list_id = tl["id"]
@@ -242,7 +241,7 @@ def fetch_todo_tasks(access_token: str) -> List[Dict[str, Any]]:
 
                 tasks_url = t_data.get("@odata.nextLink")
 
-        lists_url = data.get("@odata.nextLink")
+        lists_url = data_json.get("@odata.nextLink")
 
     return tasks
 
@@ -267,8 +266,8 @@ def fetch_planner_tasks(access_token: str) -> List[Dict[str, Any]]:
             print(f"Warning: Failed to fetch Planner tasks ({resp.status_code}): {resp.text}")
             break
 
-        data = resp.json()
-        for t in data.get("value", []):
+        data_json = resp.json()
+        for t in data_json.get("value", []):
             if t.get("percentComplete", 0) == 100:
                 continue  # Skip completed tasks
 
@@ -317,7 +316,7 @@ def fetch_planner_tasks(access_token: str) -> List[Dict[str, Any]]:
                 "updated": t.get("createdDateTime"),
             })
 
-        url = data.get("@odata.nextLink")
+        url = data_json.get("@odata.nextLink")
 
     return tasks
 
@@ -336,10 +335,17 @@ def fetch_all_tasks(
     return all_tasks
 
 
-def convert_to_task(ms_task: Dict[str, Any], task_id: Optional[int] = None) -> Optional[Any]:
+def convert_to_task(
+    ms_task: Dict[str, Any],
+    task_id: Optional[int] = None,
+    include_tags: Optional[bool] = None,
+) -> Optional[Any]:
     """Converts a raw Microsoft task dictionary to the project's Task model."""
     if Task is None:
         return None
+
+    if include_tags is None:
+        include_tags = INCLUDE_TAGS and READ_TAGS
 
     task = Task()
     if task_id is not None:
@@ -358,11 +364,11 @@ def convert_to_task(ms_task: Dict[str, Any], task_id: Optional[int] = None) -> O
     task.priority = ms_task.get("priority", 2)
     task.tags = []
 
-    # Tag with list name and source
-    list_name = ms_task.get("list")
-    source = ms_task.get("source")
+    # Tag with list name and source if enabled
+    if include_tags and Tag is not None:
+        list_name = ms_task.get("list")
+        source = ms_task.get("source")
 
-    if Tag is not None:
         if list_name:
             try:
                 t1 = Tag(list_name)
@@ -391,6 +397,7 @@ def download_tasks(
     as_objects: bool = True,
     include_todo: bool = True,
     include_planner: bool = True,
+    include_tags: Optional[bool] = None,
 ) -> List[Any]:
     """
     Logs in the user to their Microsoft account and downloads tasks from To Do and Planner.
@@ -401,12 +408,13 @@ def download_tasks(
     :param as_objects: If True (default), returns tasks converted to Task model instances.
     :param include_todo: Whether to fetch from Microsoft To Do.
     :param include_planner: Whether to fetch from Microsoft Planner.
+    :param include_tags: If True, populates task tags; if False, leaves tags empty. Defaults to INCLUDE_TAGS.
     :return: List of tasks (Task instances or dictionaries).
     """
     token = get_auth_token(user_id=user_id, force_login=force_login, use_device_code=use_device_code)
     tasks = fetch_all_tasks(token, include_todo=include_todo, include_planner=include_planner)
     if as_objects:
-        return [convert_to_task(t) for t in tasks]
+        return [convert_to_task(t, include_tags=include_tags) for t in tasks]
     return tasks
 
 
@@ -421,6 +429,7 @@ if __name__ == "__main__":
     parser.add_argument("--raw", action="store_true", help="Return raw dictionaries instead of Task objects")
     parser.add_argument("--no-todo", action="store_true", help="Skip Microsoft To Do")
     parser.add_argument("--no-planner", action="store_true", help="Skip Microsoft Planner")
+    parser.add_argument("--no-tags", action="store_true", help="Leave task tags empty")
     args = parser.parse_args()
 
     if args.logout:
@@ -431,6 +440,7 @@ if __name__ == "__main__":
             print("No saved token found.")
     else:
         print("Fetching Microsoft tasks...")
+        should_include_tags = False if args.no_tags else None
         tasks = download_tasks(
             user_id=args.user,
             force_login=args.login,
@@ -438,6 +448,7 @@ if __name__ == "__main__":
             as_objects=not args.raw,
             include_todo=not args.no_todo,
             include_planner=not args.no_planner,
+            include_tags=should_include_tags,
         )
         print(f"Downloaded {len(tasks)} tasks:")
         for task in tasks:

@@ -3,7 +3,6 @@ from typing import List, Optional
 from tag import Tag
 
 
-
 class Task:
     def __init__(self):
         self.id: int = 0
@@ -11,7 +10,7 @@ class Task:
         self.deadline: Optional[datetime] = None
         self.time: Optional[datetime] = None
         """ required time to spend at task"""
-        self.focus: int
+        self.focus: int = 0
         self.priority: int = 1
         self.tags: List[Tag] = []
         self.llm_metadata: str = ""
@@ -24,9 +23,5 @@ class Task:
         )
 
 
-
-
-
-
-
-class TaskFrame()
+class TaskFrame:
+    pass
