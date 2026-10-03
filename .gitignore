@@ -1,2 +1,5 @@
 credentials.json
 token.json
+microsoft_credentials.json
+ms_token*.json
+__pycache__
