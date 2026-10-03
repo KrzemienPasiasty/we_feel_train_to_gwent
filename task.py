@@ -9,8 +9,17 @@ class Task:
         self.deadline: DateTime
         self.time: DateTime
         """ required time to spend at task"""
+        self.focus: int
         self.priority: int
         self.tags: list[Tag]
 
 
         self.llm_metadata: str
+
+
+
+
+
+
+
+class TaskFrame()
