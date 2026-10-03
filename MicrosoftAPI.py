@@ -11,6 +11,11 @@ try:
     from tag import Tag
     import data
 except ImportError:
+    try:
+        from we_feel_train_to_gwent.task import Task
+        from we_feel_train_to_gwent.tag import Tag
+        from we_feel_train_to_gwent import data
+    except ImportError:
         Task = None
         Tag = None
         data = None
@@ -214,9 +219,15 @@ def fetch_todo_tasks(access_token: str) -> List[Dict[str, Any]]:
                     if body.get("contentType") == "html":
                         notes = _clean_html(notes)
 
-                    # Map importance
+                    # Map importance: higher number = more urgent
+                    # low -> 1, normal (base) -> 2, high (urgent / starred) -> 3
                     importance = str(t.get("importance", "normal")).lower()
-                    priority = 1 if importance == "high" else (2 if importance == "normal" else 3)
+                    if importance == "high":
+                        priority = 3
+                    elif importance == "normal":
+                        priority = 2
+                    else:
+                        priority = 1
 
                     tasks.append({
                         "id": t["id"],
@@ -282,16 +293,18 @@ def fetch_planner_tasks(access_token: str) -> List[Dict[str, Any]]:
                 except Exception:
                     due = None
 
-            # Map Planner priority: 1=Urgent, 3=Important, 5=Medium, 9=Low
+            # Map Planner priority: higher number = more urgent
+            # Graph API returns: 1=Urgent, 3=Important, 5=Medium, 9=Low
+            # Mapped to: 4=Urgent, 3=Important, 2=Medium, 1=Low
             raw_priority = t.get("priority", 5)
             if raw_priority <= 1:
-                priority = 1
-            elif raw_priority <= 3:
-                priority = 2
-            elif raw_priority <= 5:
-                priority = 3
-            else:
                 priority = 4
+            elif raw_priority <= 3:
+                priority = 3
+            elif raw_priority <= 5:
+                priority = 2
+            else:
+                priority = 1
 
             tasks.append({
                 "id": t["id"],
@@ -342,8 +355,30 @@ def convert_to_task(ms_task: Dict[str, Any], task_id: Optional[int] = None) -> O
     task.description = f"{title}\n{notes}".strip() if notes else title
     task.deadline = ms_task.get("due")
     task.time = None
-    task.priority = ms_task.get("priority", 1)
+    task.priority = ms_task.get("priority", 2)
     task.tags = []
+
+    # Tag with list name and source
+    list_name = ms_task.get("list")
+    source = ms_task.get("source")
+
+    if Tag is not None:
+        if list_name:
+            try:
+                t1 = Tag(list_name)
+                t1.title = list_name
+                t1.color = (31, 83, 141)
+                task.tags.append(t1)
+            except Exception:
+                pass
+        if source:
+            try:
+                t2 = Tag(source)
+                t2.title = source
+                t2.color = (0, 120, 215)
+                task.tags.append(t2)
+            except Exception:
+                pass
 
     task.llm_metadata = ""
     return task
