@@ -11,6 +11,7 @@ class Task:
         self.deadline: Optional[datetime] = None
         self.time: Optional[datetime] = None
         """ required time to spend at task"""
+        self.focus: int
         self.priority: int = 1
         self.tags: List[Tag] = []
         self.llm_metadata: str = ""
@@ -21,3 +22,11 @@ class Task:
             f"Task(id={self.id}, description={self.description!r}, "
             f"deadline={self.deadline}, priority={self.priority}, tags={tags_str})"
         )
+
+
+
+
+
+
+
+class TaskFrame()
