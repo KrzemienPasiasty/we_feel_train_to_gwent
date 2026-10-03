@@ -1,2 +1,6 @@
 credentials.json
 token.json
+microsoft_credentials.json
+ms_token*.json
+__pycache__
+clickup_credentials.json
