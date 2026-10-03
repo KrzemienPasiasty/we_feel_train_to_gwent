@@ -22,4 +22,5 @@ class Task:
 
 
 
-class TaskFrame()
+class TaskFrame():
+    pass
