@@ -19,23 +19,36 @@ READ_TAGS: bool = True
 
 CLICKUP_API_BASE = "https://api.clickup.com/api/v2"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UNIFIED_CREDENTIALS_FILE = os.path.join(BASE_DIR, "api_credentials.json")
 CREDENTIALS_FILE = os.path.join(BASE_DIR, "clickup_credentials.json")
 
 
 def get_api_token(credentials_path: Optional[str] = None) -> str:
     """
     Retrieves the ClickUp personal API token from environment variable or credentials file.
-    If the file does not exist, generates a template file with instructions.
+    Checks unified api_credentials.json first, then clickup_credentials.json.
     """
-    if credentials_path is None:
-        credentials_path = CREDENTIALS_FILE
-
     # 1. Check environment variable
     env_token = os.environ.get("CLICKUP_API_TOKEN")
     if env_token:
         return env_token.strip()
 
-    # 2. Check JSON credentials file
+    # 2. Check unified api_credentials.json
+    if os.path.exists(UNIFIED_CREDENTIALS_FILE):
+        try:
+            with open(UNIFIED_CREDENTIALS_FILE, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+                cu_cfg = cfg.get("clickup", {})
+                api_token = cu_cfg.get("api_token")
+                if api_token and api_token != "YOUR_CLICKUP_PERSONAL_API_TOKEN":
+                    return api_token.strip()
+        except Exception:
+            pass
+
+    # 3. Check standalone JSON credentials file
+    if credentials_path is None:
+        credentials_path = CREDENTIALS_FILE
+
     if os.path.exists(credentials_path):
         try:
             with open(credentials_path, "r", encoding="utf-8") as f:
@@ -46,19 +59,9 @@ def get_api_token(credentials_path: Optional[str] = None) -> str:
         except Exception:
             pass
 
-    # 3. Create template if missing
-    template = {
-        "api_token": "YOUR_CLICKUP_PERSONAL_API_TOKEN",
-        "note": "Get your token from ClickUp -> Settings -> Apps -> API Token -> Generate."
-    }
-    if not os.path.exists(credentials_path):
-        with open(credentials_path, "w", encoding="utf-8") as f:
-            json.dump(template, f, indent=4)
-
     raise FileNotFoundError(
-        f"ClickUp API token is not configured. A template was created at: {credentials_path}\n"
-        "Please paste your personal API token into 'api_token' in clickup_credentials.json, "
-        "or set the CLICKUP_API_TOKEN environment variable."
+        "ClickUp API token is not configured. Please fill 'api_token' in "
+        f"'{UNIFIED_CREDENTIALS_FILE}' under the 'clickup' section, or set CLICKUP_API_TOKEN."
     )
 
 

@@ -4,4 +4,7 @@ microsoft_credentials.json
 ms_token*.json
 clickup_credentials.json
 clickup_token*.json
+api_credentials.json
+*credentials*.json
+*token*.json
 __pycache__
