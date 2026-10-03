@@ -1,0 +1,14 @@
+[
+    {
+        "title": "zrobić przelew",
+        "description": "do skarbówki",
+        "time": "00:10:00",
+        "priority": 3,
+        "tags": [
+            {
+                "name": "Zarządzanie Finansami"
+            }
+        ],
+        "llm_metadata": "Zadanie dotyczy przelewu do skarbówki, co wchodzi w obszar zarządzania finansami. Oszacowany czas to 10 minut przy założeniu, że zadanie wymaga przygotowania danych i wykonania przelewu. Priorytet 3, jako że jest to ważne, ale nie krytyczne zadanie, które można wykonać w krótkim czasie."
+    }
+]
