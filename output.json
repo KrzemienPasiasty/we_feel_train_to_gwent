@@ -1,14 +1,19 @@
 [
     {
-        "title": "zrobić przelew",
-        "description": "do skarbówki",
-        "time": "00:10:00",
+        "id": 999,
+        "description": "Zaplanować urlop - Kupić bilety do Włoch i wynająć hotel",
+        "deadline": "1970-01-01T00:00:00",
+        "time": "01:30:00",
+        "focus": 2,
         "priority": 3,
         "tags": [
             {
                 "name": "Zarządzanie Finansami"
+            },
+            {
+                "name": "Regeneracja"
             }
         ],
-        "llm_metadata": "Zadanie dotyczy przelewu do skarbówki, co wchodzi w obszar zarządzania finansami. Oszacowany czas to 10 minut przy założeniu, że zadanie wymaga przygotowania danych i wykonania przelewu. Priorytet 3, jako że jest to ważne, ale nie krytyczne zadanie, które można wykonać w krótkim czasie."
+        "llm_metadata": "Zadanie obejmuje planowanie urlopu, co zazwyczaj wymaga nieco skupienia na budżecie oraz organizacji. Oszacowałem czas na 1,5 godziny, co jest wystarczające na przeszukanie ofert oraz dokonanie rezerwacji. Priorytet oceniłem na 3, ponieważ planowanie podróży jest istotne, ale nie jest to naglące zadanie."
     }
 ]

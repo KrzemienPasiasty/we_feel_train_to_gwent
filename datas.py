@@ -2,7 +2,20 @@ import json
 from xmlrpc.client import DateTime
 from tag import Tag # Zakładamy, że ten plik (tag.py) istnieje obok
 
-from task import Task # Zakładamy, że ten plik (task.py) istnieje obok
+# DODANY IMPORT Z TWOJEGO PLIKU LLM.PY
+from llm import process_tasks_file
+
+class Task:
+    def __init__(self):
+        # Inicjalizujemy pola, aby uniknąć błędów AttributeError
+        self.id: int = 0
+        self.description: str = ""
+        self.deadline: DateTime = None
+        self.time: DateTime = None
+        self.focus: int = 0
+        self.priority: int = 0
+        self.tags: list[Tag] = []
+        self.llm_metadata: str = ""
 
 def fill_task(empty_task: Task, task_data: dict) -> Task:
     """
@@ -16,21 +29,18 @@ def fill_task(empty_task: Task, task_data: dict) -> Task:
     
     # 1. Mapowanie 'deadline' na obiekt DateTime
     deadline_str = task_data.get("deadline", "1970-01-01T00:00:00")
-    # DateTime poprawnie zinterpretuje stringa w formacie ISO 8601
     empty_task.deadline = DateTime(deadline_str)
     
     # 2. Mapowanie 'time' (samo HH:MM:SS) na obiekt DateTime
     time_str = task_data.get("time", "00:00:00")
-    # Doklejamy sztuczną datę początkową, ponieważ DateTime musi mieć rok/miesiąc/dzień
     empty_task.time = DateTime(f"1970-01-01T{time_str}")
     
     # 3. Mapowanie słowników tagów na obiekty klasy Tag
     raw_tags = task_data.get("tags", [])
     for tag_dict in raw_tags:
-        # Zakładam, że klasa Tag przyjmuje 'name' w konstruktorze lub można to przypisać w ten sposób.
-        # Jeśli twoja klasa Tag działa inaczej, dostosuj poniższe 2 linijki:
-        new_tag = Tag()          # Zakładamy, że Tag też wymaga pustego inicjatora
-        new_tag.name = tag_dict.get("name", "")
+        # POPRAWKA: Przekazujemy nazwę taga do nawiasu, żeby nie było błędu z inicjatorem
+        tag_name = tag_dict.get("name", "")
+        new_tag = Tag(tag_name)
         empty_task.tags.append(new_tag)
         
     return empty_task
@@ -56,15 +66,54 @@ def load_tasks_from_json(json_filepath: str) -> list[Task]:
         
     return filled_tasks
 
-# --- PRZYKŁAD UŻYCIA (możesz to usunąć, jeśli nie potrzebujesz odpalać tego piku jako skryptu) ---
-if __name__ == "__main__":
-    # Testujemy załadowanie z JSON-a
-    tasks_list = load_tasks_from_json('output.json')
+# ========================================================================
+# NOWA FUNKCJA: KOMPLETNY PROCES (ZAPIS -> CALL LLM.PY -> ODCZYT DO RAM)
+# ========================================================================
+def process_and_load_tasks(surowe_zadania: list[dict]) -> list[Task]:
+    """
+    Automatyzuje cały proces: zapis do pliku, call AI, odczyt i mapowanie.
+    """
+    print("\n1. Zapisuję surowe dane do 'input.json'...")
+    with open('input.json', 'w', encoding='utf-8') as f:
+        json.dump(surowe_zadania, f, indent=4, ensure_ascii=False)
+        
+    print("2. Uruchamiam sztuczną inteligencję (llm.py)...")
+    # Callujemy Twoją funkcję z pliku llm.py
+    process_tasks_file('input.json', 'output.json', 'ai_thoughts.md')
     
-    print(f"Załadowano {len(tasks_list)} obiektów Task.")
-    if tasks_list:
-        pierwszy_task = tasks_list[0]
-        print(f"ID: {pierwszy_task.id}")
-        print(f"Opis: {pierwszy_task.description}")
-        print(f"Tagi: {[t.name for t in pierwszy_task.tags]}")
-        print(f"Deadline (obiekt DateTime): {pierwszy_task.deadline}")
+    print("3. Pobieram dane z 'output.json' i tworzę pełne obiekty Task...")
+    gotowe_obiekty = load_tasks_from_json('output.json')
+    
+    return gotowe_obiekty
+
+
+# --- PRZYKŁAD UŻYCIA ---
+if __name__ == "__main__":
+    
+    # Tworzymy symulowane, surowe wejście (zadanie, w którym AI musi wymyślić czas, focus i priorytet)
+    testowe_zadanie = [{
+        "id": 999,
+        "title": "Zaplanować urlop",
+        "description": "Kupić bilety do Włoch i wynająć hotel",
+        "tags": [{"name": "Zarządzanie Finansami"}, {"name": "Regeneracja"}]
+    }]
+    
+    print("ROZPOCZYNAM GŁÓWNY PROCES:")
+    
+    # CALLUJEMY NASZĄ NOWĄ FUNKCJĘ
+    wynikowe_taski = process_and_load_tasks(testowe_zadanie)
+    
+    # WYPISUJEMY GOTOWY OBIEKT:
+    if wynikowe_taski:
+        pelen_task = wynikowe_taski[0]
+        print("\n=== ZAKOŃCZONO SUKCESEM. GOTOWY OBIEKT: ===")
+        print(f"ID:           {pelen_task.id}")
+        print(f"Opis:         {pelen_task.description}")
+        
+        # Uwaga: używam getattr() żeby obsłużyć zarówno `tag.name` jak i `tag.tag` (zależnie jak to masz w tag.py)
+        print(f"Tagi:         {[getattr(t, 'name', getattr(t, 'tag', '')) for t in pelen_task.tags]}")
+        
+        print(f"Czas z AI:    {pelen_task.time}")
+        print(f"Focus z AI:   {pelen_task.focus}")
+        print(f"Priorytet AI: {pelen_task.priority}")
+        print(f"Metadane:     {pelen_task.llm_metadata}")
