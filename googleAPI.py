@@ -11,9 +11,13 @@ try:
     from tag import Tag
     import data
 except ImportError:
-        Task = None
-        Tag = None
-        data = None
+    Task = None
+    Tag = None
+    data = None
+
+# Configuration variable: controls whether tags are read/created or left empty
+INCLUDE_TAGS: bool = True
+READ_TAGS: bool = True
 
 SCOPES = ["https://www.googleapis.com/auth/tasks.readonly"]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -130,10 +134,17 @@ def fetch_all_tasks(service) -> List[Dict[str, Any]]:
     return result
 
 
-def convert_to_task(google_task: Dict[str, Any], task_id: Optional[int] = None) -> Optional[Any]:
+def convert_to_task(
+    google_task: Dict[str, Any],
+    task_id: Optional[int] = None,
+    include_tags: Optional[bool] = None,
+) -> Optional[Any]:
     """Converts a raw Google task dictionary to the project's Task model."""
     if Task is None:
         return None
+
+    if include_tags is None:
+        include_tags = INCLUDE_TAGS and READ_TAGS
 
     task = Task()
     if task_id is not None:
@@ -152,6 +163,17 @@ def convert_to_task(google_task: Dict[str, Any], task_id: Optional[int] = None) 
     task.priority = None
     task.tags = []
 
+    if include_tags and Tag is not None:
+        list_name = google_task.get("list")
+        if list_name:
+            try:
+                t = Tag(list_name)
+                t.title = list_name
+                t.color = (31, 83, 141)
+                task.tags.append(t)
+            except Exception:
+                pass
+
     task.llm_metadata = ""
     return task
 
@@ -160,6 +182,7 @@ def download_tasks(
     user_id: Optional[str] = None,
     force_login: bool = False,
     as_objects: bool = True,
+    include_tags: Optional[bool] = None,
 ) -> List[Any]:
     """
     Logs in the user (if not already logged in or force_login=True) and downloads their tasks.
@@ -167,12 +190,13 @@ def download_tasks(
     :param user_id: Optional user identifier (e.g. username/email) to support multiple accounts.
     :param force_login: If True, opens the Google OAuth screen to select or switch accounts.
     :param as_objects: If True (default), returns tasks converted to Task model instances.
+    :param include_tags: If True, populates task tags; if False, leaves tags empty. Defaults to INCLUDE_TAGS.
     :return: List of tasks (Task instances by default, or dictionaries if as_objects=False).
     """
     service = get_service(user_id=user_id, force_login=force_login)
     tasks = fetch_all_tasks(service)
     if as_objects:
-        return [convert_to_task(t) for t in tasks]
+        return [convert_to_task(t, include_tags=include_tags) for t in tasks]
     return tasks
 
 
@@ -184,6 +208,7 @@ if __name__ == "__main__":
     parser.add_argument("--logout", action="store_true", help="Log out (remove saved token)")
     parser.add_argument("--user", type=str, default=None, help="User ID or account identifier")
     parser.add_argument("--raw", action="store_true", help="Return raw dictionaries instead of Task objects")
+    parser.add_argument("--no-tags", action="store_true", help="Leave task tags empty")
     args = parser.parse_args()
 
     if args.logout:
@@ -194,7 +219,13 @@ if __name__ == "__main__":
             print("No saved token found.")
     else:
         print("Fetching tasks...")
-        tasks = download_tasks(user_id=args.user, force_login=args.login, as_objects=not args.raw)
+        should_include_tags = False if args.no_tags else None
+        tasks = download_tasks(
+            user_id=args.user,
+            force_login=args.login,
+            as_objects=not args.raw,
+            include_tags=should_include_tags,
+        )
         print(f"Downloaded {len(tasks)} tasks:")
         for task in tasks:
             print(task)
