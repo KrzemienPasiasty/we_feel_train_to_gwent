@@ -13,6 +13,106 @@ from week_periods import DAYS_IN_WEEK, SLOT_MINUTES, SLOTS_PER_DAY, Weekday, Wee
 
 
 # ==============================================================================
+# Priority Multipliers for Penalties
+# ==============================================================================
+
+DEFAULT_PRIORITY_MULTIPLIERS: Dict[Any, float] = {
+    1: 1.0,
+    2: 1.5,
+    3: 2.5,
+    4: 4.0,
+    "LOW": 1.0,
+    "MEDIUM": 1.5,
+    "HIGH": 2.5,
+    "CRITICAL": 4.0,
+}
+
+
+def get_priority_multiplier(
+    priority: Any,
+    priority_multipliers: Optional[Dict[Any, float]] = None,
+    default_multiplier: float = 1.0
+) -> float:
+    """
+    Returns the penalty multiplier for a task based on its priority.
+
+    Supports:
+      - Integers (e.g. 1=LOW, 2=MEDIUM, 3=HIGH, 4=CRITICAL)
+      - Strings (e.g. 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL', case-insensitive)
+      - Custom dictionary overrides passed via `priority_multipliers`
+      - Numeric fallbacks (using the numeric priority itself if > 0)
+    """
+    mapping = priority_multipliers if priority_multipliers is not None else DEFAULT_PRIORITY_MULTIPLIERS
+
+    if priority is None:
+        return default_multiplier
+
+    # Direct key lookup
+    if priority in mapping:
+        return float(mapping[priority])
+
+    # Case-insensitive string lookup
+    if isinstance(priority, str):
+        upper_p = priority.strip().upper()
+        if upper_p in mapping:
+            return float(mapping[upper_p])
+
+    # Numeric fallback
+    if isinstance(priority, (int, float)):
+        return max(0.1, float(priority))
+
+    return default_multiplier
+
+
+# ==============================================================================
+# Meal Configuration & Representation
+# ==============================================================================
+
+@dataclass
+class ScheduledMeal:
+    """Represents a scheduled meal block in the weekly schedule."""
+    meal_index: int               # 0, 1, 2...
+    name: str                     # "Breakfast", "Lunch", "Dinner", etc.
+    day: int                      # 0..6 (Monday..Sunday)
+    start_slot: int               # 0..95
+    end_slot: int                 # start_slot + slots_needed
+    start_time: time
+    end_time: time
+    duration_minutes: int
+    tag: Optional[Tag] = None
+    color: str = "#FF9800"
+
+    def to_calendar_dict(self) -> Dict[str, Any]:
+        """Formats the scheduled meal for WeeklyCalendarFrame."""
+        return {
+            "id": -(1000 + self.day * 10 + self.meal_index),
+            "title": f"Meal: {self.name}",
+            "day": self.day,
+            "start_time": self.start_time,
+            "duration_minutes": self.duration_minutes,
+            "color": self.color,
+            "priority": "HIGH",
+            "is_meal": True
+        }
+
+
+@dataclass
+class MealConfig:
+    """Configuration for meal scheduling and spacing limits."""
+    meals_per_day: int = 3
+    meal_duration_minutes: int = 30
+    min_time_between_meals_minutes: int = 180  # 3 hours minimum
+    max_time_between_meals_minutes: int = 300  # 5 hours maximum
+    earliest_meal_time: time = time(7, 0)
+    latest_meal_time: time = time(21, 30)
+    meal_spacing_penalty_per_minute: float = 0.5   # 30 pts per hour of spacing violation
+    missing_meal_penalty: float = 100.0             # Penalty per missing meal
+    meal_tag_names: Optional[List[str]] = None
+    meal_color: str = "#FF9800"
+    active_meal_days: Optional[List[int]] = None
+
+
+# ==============================================================================
 # Configuration
 # ==============================================================================
 
@@ -39,6 +139,42 @@ class OptimizationConfig:
     tournament_size: int = 3                  # Size for tournament selection
     random_seed: Optional[int] = None         # Random seed for reproducibility
     reference_date: Optional[datetime] = None # Monday date corresponding to day 0 of the weekly schedule
+    unassigned_task_penalty: float = 50.0     # Base penalty per unassigned task
+    priority_multipliers: Optional[Dict[Any, float]] = None  # Multiplier per task priority
+    penalize_tag_mismatch: bool = True        # Exponential penalty for scheduling tasks into slots with alien tags
+    tag_mismatch_base_penalty: float = 10.0   # Base penalty factor for tag mismatch
+    tag_mismatch_growth_rate: float = 1.5     # Exponential base (growth rate per overlap unit)
+    tag_mismatch_scale_unit: float = 1.0      # Number of slots (or units) per exponential step
+    tag_mismatch_scale_by_priority: bool = True  # Whether to multiply tag mismatch penalty by task priority
+
+    # Meal scheduling settings
+    enable_meals: bool = True
+    meals_per_day: int = 3
+    meal_duration_minutes: int = 30
+    min_time_between_meals_minutes: int = 180  # 3 hours
+    max_time_between_meals_minutes: int = 300  # 5 hours
+    earliest_meal_time: time = time(7, 0)
+    latest_meal_time: time = time(21, 30)
+    meal_spacing_penalty_per_minute: float = 0.5
+    missing_meal_penalty: float = 100.0
+    meal_tag_names: Optional[List[str]] = None
+    meal_color: str = "#FF9800"
+    active_meal_days: Optional[List[int]] = None
+    meal_config: Optional[MealConfig] = None
+
+    def __post_init__(self):
+        if self.meal_config is not None:
+            self.meals_per_day = self.meal_config.meals_per_day
+            self.meal_duration_minutes = self.meal_config.meal_duration_minutes
+            self.min_time_between_meals_minutes = self.meal_config.min_time_between_meals_minutes
+            self.max_time_between_meals_minutes = self.meal_config.max_time_between_meals_minutes
+            self.earliest_meal_time = self.meal_config.earliest_meal_time
+            self.latest_meal_time = self.meal_config.latest_meal_time
+            self.meal_spacing_penalty_per_minute = self.meal_config.meal_spacing_penalty_per_minute
+            self.missing_meal_penalty = self.meal_config.missing_meal_penalty
+            self.meal_tag_names = self.meal_config.meal_tag_names
+            self.meal_color = self.meal_config.meal_color
+            self.active_meal_days = self.meal_config.active_meal_days
 
 
 # ==============================================================================
@@ -122,15 +258,17 @@ class ScheduledTask:
 
 class Schedule:
     """
-    Decoded schedule containing concrete assignments of tasks to days and slots.
+    Decoded schedule containing concrete assignments of tasks and meals
+    to days and slots.
     """
 
     def __init__(self, weekly_schedule: WeeklySchedule):
         self.weekly_schedule = weekly_schedule
         self.assignments: List[ScheduledTask] = []
+        self.meals: List[ScheduledMeal] = []
         self.unassigned_tasks: List[Task] = []
         self.task_assignments: Dict[int, ScheduledTask] = {}
-        # grid[day][slot] = task_id or None
+        # grid[day][slot] = task_id, negative ID for meal, or None
         self.grid: List[List[Optional[int]]] = [
             [None for _ in range(SLOTS_PER_DAY)] for _ in range(DAYS_IN_WEEK)
         ]
@@ -141,6 +279,17 @@ class Schedule:
         for s in range(scheduled.start_slot, scheduled.end_slot):
             self.grid[scheduled.day][s] = scheduled.task.id
 
+    def add_meal(self, meal: ScheduledMeal) -> None:
+        self.meals.append(meal)
+        meal_id = -(1000 + meal.day * 10 + meal.meal_index)
+        for s in range(meal.start_slot, meal.end_slot):
+            self.grid[meal.day][s] = meal_id
+
+    def get_meals_for_day(self, day: int) -> List[ScheduledMeal]:
+        day_meals = [m for m in self.meals if m.day == day]
+        day_meals.sort(key=lambda m: m.start_slot)
+        return day_meals
+
     def is_slot_free(self, day: int, slot: int) -> bool:
         return self.grid[day][slot] is None
 
@@ -149,9 +298,9 @@ class Schedule:
             return False
         return all(self.grid[day][s] is None for s in range(start_slot, end_slot))
 
-    def to_calendar_dicts(self) -> List[Dict[str, Any]]:
+    def to_calendar_dicts(self, include_meals: bool = True) -> List[Dict[str, Any]]:
         """
-        Converts scheduled tasks to the dictionary format expected by
+        Converts scheduled tasks and meals to the dictionary format expected by
         WeeklyCalendarFrame.set_tasks(...) in calender.py.
         """
         results = []
@@ -188,6 +337,11 @@ class Schedule:
                 "priority": priority_str,
                 "task": st.task
             })
+
+        if include_meals:
+            for m in self.meals:
+                results.append(m.to_calendar_dict())
+
         return results
 
 
@@ -198,6 +352,10 @@ class Schedule:
 def slot_to_time(slot_idx: int) -> time:
     minutes = slot_idx * SLOT_MINUTES
     return time(hour=(minutes // 60) % 24, minute=minutes % 60)
+
+
+def time_to_slot(t: time) -> int:
+    return (t.hour * 60 + t.minute) // SLOT_MINUTES
 
 
 def get_task_duration_minutes(task: Task, default_minutes: int = 60) -> int:
@@ -249,6 +407,73 @@ def match_tags(task_tags: List[Tag], slot_tags: List[Tag]) -> Tuple[bool, List[T
     return (len(matching) > 0), matching
 
 
+def calculate_task_tag_mismatch_overlap(
+    scheduled_task: ScheduledTask,
+    weekly_schedule: WeeklySchedule
+) -> int:
+    """
+    Returns the number of 15-minute slots in which the scheduled task
+    overlaps with a tag other than one from its own list (e.g. sleeping period).
+    """
+    task_tag_ids = tag_identifiers(scheduled_task.task.tags)
+    mismatched_slots = 0
+    day = scheduled_task.day
+
+    for slot_idx in range(scheduled_task.start_slot, scheduled_task.end_slot):
+        slot_tags = weekly_schedule._slots[day][slot_idx]
+        if not slot_tags:
+            continue
+        # Check if slot contains any tag other than one in task tags
+        alien_tags = [st for st in slot_tags if not (tag_identifiers([st]) & task_tag_ids)]
+        if alien_tags:
+            mismatched_slots += 1
+
+    return mismatched_slots
+
+
+def calculate_tag_mismatch_penalty(
+    schedule: Schedule,
+    base_penalty: float = 10.0,
+    growth_rate: float = 1.5,
+    scale_unit: float = 1.0,
+    overlap_unit: str = "slots",
+    scale_by_priority: bool = True,
+    priority_multipliers: Optional[Dict[Any, float]] = None
+) -> float:
+    """
+    Calculates exponential penalty for tasks assigned to time slots with tags
+    other than their own (e.g. assigning a task for a sleeping period).
+    The penalty grows exponentially with the overlap size:
+      exponent = overlap / scale_unit
+      penalty = base_penalty * (growth_rate ** exponent - 1) * priority_multiplier
+    """
+    total_penalty = 0.0
+    safe_growth = max(1.001, float(growth_rate))
+    safe_scale = max(1e-4, float(scale_unit))
+
+    for st in schedule.assignments:
+        mismatched_slots = calculate_task_tag_mismatch_overlap(st, schedule.weekly_schedule)
+        if mismatched_slots <= 0:
+            continue
+
+        if overlap_unit.lower() == "hours":
+            overlap_val = mismatched_slots * (SLOT_MINUTES / 60.0)
+        elif overlap_unit.lower() == "minutes":
+            overlap_val = float(mismatched_slots * SLOT_MINUTES)
+        else:  # "slots"
+            overlap_val = float(mismatched_slots)
+
+        exponent = overlap_val / safe_scale
+        task_penalty = base_penalty * (math.pow(safe_growth, exponent) - 1.0)
+
+        if scale_by_priority:
+            task_penalty *= get_priority_multiplier(st.task.priority, priority_multipliers)
+
+        total_penalty += task_penalty
+
+    return total_penalty
+
+
 def task_finish_datetime(
     day: int,
     end_slot: int,
@@ -264,6 +489,212 @@ def task_finish_datetime(
 
 
 # ==============================================================================
+# Meal Parsing, Placement & Spacing Penalty
+# ==============================================================================
+
+def parse_meals_from_weekly_schedule(
+    weekly_schedule: WeeklySchedule,
+    meal_tag_names: Optional[List[str]] = None
+) -> List[ScheduledMeal]:
+    """
+    Scans WeeklySchedule for slots tagged with meal/food tags (e.g. 'Meal', 'Lunch', etc.)
+    and groups consecutive slots into ScheduledMeal instances.
+    """
+    if meal_tag_names is None:
+        meal_tag_names = ["meal", "food", "breakfast", "lunch", "dinner", "supper", "posiłek", "jedzenie", "obiad", "śniadanie", "kolacja"]
+
+    tag_set = {t.lower() for t in meal_tag_names}
+    parsed_meals: List[ScheduledMeal] = []
+
+    for day in range(DAYS_IN_WEEK):
+        in_meal = False
+        meal_start = 0
+        meal_tags: List[Tag] = []
+
+        for slot in range(SLOTS_PER_DAY):
+            slot_tags = weekly_schedule._slots[day][slot]
+            has_meal_tag = any(
+                str(getattr(st, "title", st)).strip().lower() in tag_set
+                for st in slot_tags
+            )
+
+            if has_meal_tag and not in_meal:
+                in_meal = True
+                meal_start = slot
+                meal_tags = slot_tags
+            elif not has_meal_tag and in_meal:
+                in_meal = False
+                duration = (slot - meal_start) * SLOT_MINUTES
+                meal_name = "Meal"
+                for st in meal_tags:
+                    title = str(getattr(st, "title", st)).strip()
+                    if title.lower() in tag_set:
+                        meal_name = title
+                        break
+
+                parsed_meals.append(ScheduledMeal(
+                    meal_index=len([m for m in parsed_meals if m.day == day]),
+                    name=meal_name,
+                    day=day,
+                    start_slot=meal_start,
+                    end_slot=slot,
+                    start_time=slot_to_time(meal_start),
+                    end_time=slot_to_time(slot),
+                    duration_minutes=duration
+                ))
+                meal_tags = []
+
+        if in_meal:
+            duration = (SLOTS_PER_DAY - meal_start) * SLOT_MINUTES
+            meal_name = "Meal"
+            for st in meal_tags:
+                title = str(getattr(st, "title", st)).strip()
+                if title.lower() in tag_set:
+                    meal_name = title
+                    break
+            parsed_meals.append(ScheduledMeal(
+                meal_index=len([m for m in parsed_meals if m.day == day]),
+                name=meal_name,
+                day=day,
+                start_slot=meal_start,
+                end_slot=SLOTS_PER_DAY,
+                start_time=slot_to_time(meal_start),
+                end_time=time(23, 59),
+                duration_minutes=duration
+            ))
+
+    return parsed_meals
+
+
+def populate_meals_for_schedule(
+    schedule: Schedule,
+    weekly_schedule: WeeklySchedule,
+    config: OptimizationConfig,
+    meal_offsets: Optional[List[int]] = None
+) -> None:
+    """
+    Parses meals from WeeklySchedule and dynamically places scheduled meals
+    for active days up to config.meals_per_day.
+    Each placed meal marks its occupied slots as reserved in schedule.grid so
+    tasks will not collide with meal periods.
+    """
+    if not getattr(config, "enable_meals", True) or getattr(config, "meals_per_day", 0) <= 0:
+        return
+
+    # 1. Parse existing meals from weekly schedule
+    parsed_existing = parse_meals_from_weekly_schedule(
+        weekly_schedule,
+        getattr(config, "meal_tag_names", None)
+    )
+    for m in parsed_existing:
+        schedule.add_meal(m)
+
+    # 2. Determine active days for meal placement
+    active_days = getattr(config, "active_meal_days", None)
+    if active_days is None:
+        active_days = list(range(DAYS_IN_WEEK))
+
+    meals_needed = getattr(config, "meals_per_day", 3)
+    duration_minutes = getattr(config, "meal_duration_minutes", 30)
+    duration_s = max(1, math.ceil(duration_minutes / SLOT_MINUTES))
+
+    earliest_t = getattr(config, "earliest_meal_time", time(7, 0))
+    latest_t = getattr(config, "latest_meal_time", time(21, 30))
+    earliest_s = time_to_slot(earliest_t)
+    latest_s = time_to_slot(latest_t)
+
+    default_names = ["Breakfast", "Lunch", "Dinner", "Snack", "Supper"]
+
+    for day in active_days:
+        existing_on_day = schedule.get_meals_for_day(day)
+        if len(existing_on_day) >= meals_needed:
+            continue
+
+        for k in range(len(existing_on_day), meals_needed):
+            if meals_needed > 1:
+                nominal_s = earliest_s + int(round(k * (latest_s - duration_s - earliest_s) / (meals_needed - 1)))
+            else:
+                nominal_s = (earliest_s + latest_s) // 2
+
+            if meal_offsets and k < len(meal_offsets):
+                nominal_s += meal_offsets[k] // SLOT_MINUTES
+
+            nominal_s = max(earliest_s, min(latest_s - duration_s, nominal_s))
+
+            # Find nearest free window of duration_s slots around nominal_s
+            best_s = None
+            for offset in range(SLOTS_PER_DAY):
+                for s_cand in [nominal_s + offset, nominal_s - offset]:
+                    if earliest_s <= s_cand <= latest_s - duration_s:
+                        if schedule.is_window_free(day, s_cand, s_cand + duration_s):
+                            best_s = s_cand
+                            break
+                if best_s is not None:
+                    break
+
+            if best_s is not None:
+                schedule.add_meal(ScheduledMeal(
+                    meal_index=k,
+                    name=default_names[k % len(default_names)],
+                    day=day,
+                    start_slot=best_s,
+                    end_slot=best_s + duration_s,
+                    start_time=slot_to_time(best_s),
+                    end_time=slot_to_time(best_s + duration_s),
+                    duration_minutes=duration_s * SLOT_MINUTES,
+                    color=getattr(config, "meal_color", "#FF9800")
+                ))
+
+
+def calculate_meal_spacing_penalty(
+    schedule: Schedule,
+    min_time_between_meals_minutes: int = 180,
+    max_time_between_meals_minutes: int = 300,
+    penalty_per_minute: float = 0.5,
+    missing_meal_penalty: float = 100.0,
+    expected_meals_per_day: int = 3,
+    active_days: Optional[List[int]] = None
+) -> float:
+    """
+    Calculates penalty for periods between meals that are longer or shorter
+    than the set limits, as well as missing meals.
+    """
+    if expected_meals_per_day <= 0:
+        return 0.0
+
+    if active_days is None:
+        # Check days where tasks are assigned or meals exist
+        active_days = list(set(st.day for st in schedule.assignments) | set(m.day for m in schedule.meals))
+        if not active_days:
+            return 0.0
+
+    total_penalty = 0.0
+
+    for day in active_days:
+        day_meals = schedule.get_meals_for_day(day)
+
+        if len(day_meals) < expected_meals_per_day:
+            missing = expected_meals_per_day - len(day_meals)
+            total_penalty += missing * missing_meal_penalty
+
+        if len(day_meals) >= 2:
+            for i in range(len(day_meals) - 1):
+                m1 = day_meals[i]
+                m2 = day_meals[i + 1]
+                gap_minutes = (m2.start_slot - m1.end_slot) * SLOT_MINUTES
+
+                if gap_minutes < min_time_between_meals_minutes:
+                    shortfall = min_time_between_meals_minutes - gap_minutes
+                    total_penalty += shortfall * penalty_per_minute
+
+                if gap_minutes > max_time_between_meals_minutes:
+                    excess = gap_minutes - max_time_between_meals_minutes
+                    total_penalty += excess * penalty_per_minute
+
+    return total_penalty
+
+
+# ==============================================================================
 # Schedule Decoder
 # ==============================================================================
 
@@ -273,13 +704,29 @@ def decode_permutation_to_schedule(
     weekly_schedule: WeeklySchedule,
     productivity_curve: ProductivityCurve,
     config: OptimizationConfig,
-    placement_bias: str = "balanced"  # "earliest", "productivity", "balanced"
+    placement_bias: str = "balanced",  # "earliest", "productivity", "balanced"
+    meal_offsets: Optional[List[int]] = None
 ) -> Schedule:
     """
     Decodes an ordered permutation of task indices into concrete time slots
-    in the WeeklySchedule.
+    in the WeeklySchedule, parsing and respecting meal times and tag constraints.
     """
     schedule = Schedule(weekly_schedule)
+
+    # 1. Parse and place meals into the schedule grid first
+    if getattr(config, "enable_meals", True) and getattr(config, "meals_per_day", 0) > 0:
+        populate_meals_for_schedule(
+            schedule=schedule,
+            weekly_schedule=weekly_schedule,
+            config=config,
+            meal_offsets=meal_offsets
+        )
+
+    # 2. Place tasks around meals and reserved windows
+    penalize_mismatch = getattr(config, "penalize_tag_mismatch", True)
+    growth = max(1.001, float(getattr(config, "tag_mismatch_growth_rate", 1.5)))
+    base_mismatch_p = float(getattr(config, "tag_mismatch_base_penalty", 10.0))
+    scale_by_prio = getattr(config, "tag_mismatch_scale_by_priority", True)
 
     for task_idx in permutation:
         task = tasks[task_idx]
@@ -295,6 +742,7 @@ def decode_permutation_to_schedule(
         focus_val = float(getattr(task, "focus", 5) or 5)
         # Normalize focus roughly to 0..1
         focus_norm = min(1.0, max(0.0, focus_val / 10.0 if focus_val <= 10 else focus_val / 100.0))
+        task_tag_ids = tag_identifiers(task.tags)
 
         # Scan all available days and slot windows
         for day in range(DAYS_IN_WEEK):
@@ -302,7 +750,7 @@ def decode_permutation_to_schedule(
             for s in range(0, SLOTS_PER_DAY - slots_needed + 1):
                 e = s + slots_needed
 
-                # Check window availability
+                # Check window availability (meals and other tasks are marked as occupied)
                 if not schedule.is_window_free(day, s, e):
                     continue
 
@@ -311,6 +759,7 @@ def decode_permutation_to_schedule(
                 all_have_tags = True
                 strictly_compatible = True
                 matched_window_tags: List[Tag] = []
+                mismatched_slots = 0
 
                 for slot_idx in range(s, e):
                     slot_tags = weekly_schedule._slots[day][slot_idx]
@@ -321,6 +770,12 @@ def decode_permutation_to_schedule(
                         strictly_compatible = False
                     matched_window_tags.extend(matched)
                     window_slot_tags.extend(slot_tags)
+
+                    # Count slots with alien tags (tags not belonging to the task)
+                    if slot_tags:
+                        alien_tags = [st for st in slot_tags if not (tag_identifiers([st]) & task_tag_ids)]
+                        if alien_tags:
+                            mismatched_slots += 1
 
                 if config.only_tagged_slots and not all_have_tags:
                     continue
@@ -360,6 +815,13 @@ def decode_permutation_to_schedule(
                         + 2.0 * deadline_factor
                         + tag_bonus
                     )
+
+                # Exponential penalty for alien tag overlap during candidate placement
+                if penalize_mismatch and mismatched_slots > 0:
+                    exp_penalty = base_mismatch_p * (math.pow(growth, mismatched_slots) - 1.0)
+                    if scale_by_prio:
+                        exp_penalty *= get_priority_multiplier(task.priority, config.priority_multipliers)
+                    candidate_score -= exp_penalty
 
                 if candidate_score > best_candidate_score:
                     best_candidate_score = candidate_score
@@ -466,7 +928,7 @@ def mutate_permutation(permutation: List[int], mutation_chance: float) -> List[i
 # ==============================================================================
 
 def default_deadline_score(schedule: Schedule, config: OptimizationConfig) -> float:
-    """Calculates score based on meeting deadlines."""
+    """Calculates score based on meeting deadlines, unassigned tasks, tag mismatch, and meal spacing."""
     score = 100.0
     for st in schedule.assignments:
         if st.task.deadline:
@@ -479,7 +941,38 @@ def default_deadline_score(schedule: Schedule, config: OptimizationConfig) -> fl
                 else:
                     late_hours = (finish_dt - st.task.deadline).total_seconds() / 3600.0
                     score -= late_hours * 10.0
-    score -= len(schedule.unassigned_tasks) * 50.0
+
+    # Unassigned tasks penalty scaled by priority multiplier
+    base_penalty = getattr(config, "unassigned_task_penalty", 50.0)
+    for task in schedule.unassigned_tasks:
+        mult = get_priority_multiplier(task.priority, config.priority_multipliers)
+        score -= base_penalty * mult
+
+    # Tag mismatch penalty (e.g. task assigned for sleeping period)
+    if getattr(config, "penalize_tag_mismatch", True):
+        tag_penalty = calculate_tag_mismatch_penalty(
+            schedule=schedule,
+            base_penalty=getattr(config, "tag_mismatch_base_penalty", 10.0),
+            growth_rate=getattr(config, "tag_mismatch_growth_rate", 1.5),
+            scale_unit=getattr(config, "tag_mismatch_scale_unit", 1.0),
+            scale_by_priority=getattr(config, "tag_mismatch_scale_by_priority", True),
+            priority_multipliers=config.priority_multipliers
+        )
+        score -= tag_penalty
+
+    # Meal spacing penalty
+    if getattr(config, "enable_meals", True) and getattr(config, "meals_per_day", 0) > 0:
+        meal_penalty = calculate_meal_spacing_penalty(
+            schedule=schedule,
+            min_time_between_meals_minutes=getattr(config, "min_time_between_meals_minutes", 180),
+            max_time_between_meals_minutes=getattr(config, "max_time_between_meals_minutes", 300),
+            penalty_per_minute=getattr(config, "meal_spacing_penalty_per_minute", 0.5),
+            missing_meal_penalty=getattr(config, "missing_meal_penalty", 100.0),
+            expected_meals_per_day=getattr(config, "meals_per_day", 3),
+            active_days=getattr(config, "active_meal_days", None)
+        )
+        score -= meal_penalty
+
     return score
 
 
@@ -528,6 +1021,7 @@ class Individual:
     placement_bias: str
     schedule: Optional[Schedule] = None
     score: float = -float("inf")
+    meal_offsets: List[int] = field(default_factory=list)
 
 
 def create_initial_population(
@@ -561,7 +1055,6 @@ def create_initial_population(
     deadline_order = sorted(range(num_tasks), key=deadline_key)
 
     # 2. Focus-Productivity correlation ranking
-    # Tasks with highest focus requirement go first to seize peak productivity slots
     def focus_key(idx: int) -> float:
         t = tasks[idx]
         return -float(getattr(t, "focus", 0) or 0)
@@ -573,18 +1066,27 @@ def create_initial_population(
     focus_rank_map = {idx: rank for rank, idx in enumerate(focus_order)}
 
     population: List[Individual] = []
+    meals_count = getattr(config, "meals_per_day", 3)
 
-    # Pure deadline individual
+    # Pure deadline individual (standard meal placement)
     ind_deadline = Individual(
         permutation=deadline_order.copy(),
-        placement_bias="earliest"
+        placement_bias="earliest",
+        meal_offsets=[0] * meals_count
     )
     population.append(ind_deadline)
 
-    # Pure focus-productivity individual
+    # Pure focus-productivity individual (meals slightly shifted to avoid focus peaks)
+    prod_offsets = []
+    for m_idx in range(meals_count):
+        # Evenly spread slight offsets
+        offset_val = 15 if m_idx % 2 == 1 else -15
+        prod_offsets.append(offset_val)
+
     ind_productivity = Individual(
         permutation=focus_order.copy(),
-        placement_bias="productivity"
+        placement_bias="productivity",
+        meal_offsets=prod_offsets
     )
     population.append(ind_productivity)
 
@@ -602,7 +1104,12 @@ def create_initial_population(
             return a * d_rank + (1.0 - a) * f_rank + jitter
 
         mixed_order = sorted(range(num_tasks), key=mixed_key)
-        population.append(Individual(permutation=mixed_order, placement_bias=bias))
+        rand_offsets = [random.choice([-30, -15, 0, 15, 30]) for _ in range(meals_count)]
+        population.append(Individual(
+            permutation=mixed_order,
+            placement_bias=bias,
+            meal_offsets=rand_offsets
+        ))
 
     # Decode and score all generated individuals
     for ind in population:
@@ -612,7 +1119,8 @@ def create_initial_population(
             weekly_schedule,
             productivity_curve,
             config,
-            placement_bias=ind.placement_bias
+            placement_bias=ind.placement_bias,
+            meal_offsets=ind.meal_offsets
         )
         ind.score = evaluate_schedule(ind.schedule, scoring_functions, productivity_curve, config)
 
@@ -698,9 +1206,9 @@ class OptimizationResult:
         self.converged = converged
         self.config = config
 
-    def to_calendar_dicts(self) -> List[Dict[str, Any]]:
+    def to_calendar_dicts(self, include_meals: bool = True) -> List[Dict[str, Any]]:
         """Direct access to GUI calendar dictionaries."""
-        return self.best_schedule.to_calendar_dicts()
+        return self.best_schedule.to_calendar_dicts(include_meals=include_meals)
 
     def __iter__(self):
         yield self.best_schedule
@@ -712,6 +1220,7 @@ class OptimizationResult:
             f"generations_run={self.generations_run}, "
             f"converged={self.converged}, "
             f"assigned_tasks={len(self.best_schedule.assignments)}, "
+            f"scheduled_meals={len(self.best_schedule.meals)}, "
             f"unassigned_tasks={len(self.best_schedule.unassigned_tasks)})"
         )
 
@@ -729,13 +1238,15 @@ def optimize_schedule(
     **kwargs
 ) -> OptimizationResult:
     """
-    Optimizes task assignment into a weekly schedule using an evolutionary algorithm.
+    Optimizes task assignment and meal scheduling into a weekly schedule using
+    an evolutionary algorithm.
 
     Workflow:
       1. Generates the first population containing:
          - A schedule based strictly on earliest deadlines.
          - A schedule based strictly on task focus correlation with productivity curve.
          - Mixed combinations of both.
+         - Meal blocks respecting duration, counts, and spacing limits.
       2. Scores all generated schedules with the passed scoring function(s).
       3. Generates consecutive populations using Partially Mapped Crossover (PMX)
          and mutation.
@@ -773,6 +1284,8 @@ def optimize_schedule(
     # Edge case: empty task list
     if not task_list:
         empty_schedule = Schedule(weekly_schedule)
+        if cfg.enable_meals and cfg.meals_per_day > 0:
+            populate_meals_for_schedule(empty_schedule, weekly_schedule, cfg)
         return OptimizationResult(
             best_schedule=empty_schedule,
             best_score=0.0,
@@ -857,7 +1370,8 @@ def optimize_schedule(
                     permutation=elite.permutation.copy(),
                     placement_bias=elite.placement_bias,
                     schedule=elite.schedule,
-                    score=elite.score
+                    score=elite.score,
+                    meal_offsets=elite.meal_offsets.copy() if elite.meal_offsets else []
                 ))
 
         # Generate offspring via PMX crossover and mutation
@@ -876,9 +1390,33 @@ def optimize_schedule(
             b1 = random.choice([p1.placement_bias, p2.placement_bias])
             b2 = random.choice([p1.placement_bias, p2.placement_bias])
 
-            next_population.append(Individual(permutation=c1_perm, placement_bias=b1))
+            # Crossover & mutate meal offsets
+            c1_offs = []
+            c2_offs = []
+            p1_offs = p1.meal_offsets or [0] * cfg.meals_per_day
+            p2_offs = p2.meal_offsets or [0] * cfg.meals_per_day
+            for o1, o2 in zip(p1_offs, p2_offs):
+                if random.random() < 0.5:
+                    c1_offs.append(o1)
+                    c2_offs.append(o2)
+                else:
+                    c1_offs.append(o2)
+                    c2_offs.append(o1)
+
+            if random.random() < cfg.mutation_chance and c1_offs:
+                idx_m = random.randrange(len(c1_offs))
+                c1_offs[idx_m] = max(-90, min(90, c1_offs[idx_m] + random.choice([-30, -15, 15, 30])))
+            if random.random() < cfg.mutation_chance and c2_offs:
+                idx_m = random.randrange(len(c2_offs))
+                c2_offs[idx_m] = max(-90, min(90, c2_offs[idx_m] + random.choice([-30, -15, 15, 30])))
+
+            next_population.append(Individual(
+                permutation=c1_perm, placement_bias=b1, meal_offsets=c1_offs
+            ))
             if len(next_population) < cfg.population_size:
-                next_population.append(Individual(permutation=c2_perm, placement_bias=b2))
+                next_population.append(Individual(
+                    permutation=c2_perm, placement_bias=b2, meal_offsets=c2_offs
+                ))
 
         # Decode and score the newly formed population
         for ind in next_population:
@@ -889,7 +1427,8 @@ def optimize_schedule(
                     weekly_schedule,
                     prod_curve,
                     cfg,
-                    placement_bias=ind.placement_bias
+                    placement_bias=ind.placement_bias,
+                    meal_offsets=ind.meal_offsets
                 )
                 ind.score = evaluate_schedule(
                     ind.schedule, scoring_functions, prod_curve, cfg
@@ -941,7 +1480,7 @@ def optimize_schedule(
 
     return OptimizationResult(
         best_schedule=best_individual.schedule or decode_permutation_to_schedule(
-            best_individual.permutation, task_list, weekly_schedule, prod_curve, cfg
+            best_individual.permutation, task_list, weekly_schedule, prod_curve, cfg, meal_offsets=best_individual.meal_offsets
         ),
         best_score=best_score,
         best_individual=best_individual,

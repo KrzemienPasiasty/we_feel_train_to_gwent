@@ -168,7 +168,9 @@ class TestScheduleOptimizer(unittest.TestCase):
 
         # Check calendar dictionary export for GUI compatibility
         cal_dicts = result.to_calendar_dicts()
-        self.assertEqual(len(cal_dicts), len(result.best_schedule.assignments))
+        self.assertEqual(len(cal_dicts), len(result.best_schedule.assignments) + len(result.best_schedule.meals))
+        task_only_dicts = result.to_calendar_dicts(include_meals=False)
+        self.assertEqual(len(task_only_dicts), len(result.best_schedule.assignments))
         for item in cal_dicts:
             self.assertIn("id", item)
             self.assertIn("title", item)

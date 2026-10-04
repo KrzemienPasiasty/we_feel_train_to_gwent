@@ -1,21 +1,49 @@
 from schedule_optimizer import (
+    DEFAULT_PRIORITY_MULTIPLIERS,
+    MealConfig,
     OptimizationConfig,
     OptimizationResult,
     ProductivityCurve,
     Schedule,
+    ScheduledMeal,
     ScheduledTask,
+    calculate_meal_spacing_penalty,
+    calculate_tag_mismatch_penalty,
+    calculate_task_tag_mismatch_overlap,
+    get_priority_multiplier,
+    mutate_permutation,
     optimize_schedule,
+    parse_meals_from_weekly_schedule,
     partially_mixed_crossover,
-    mutate_permutation
+    populate_meals_for_schedule,
+)
+from productivity_scoring import (
+    create_focus_productivity_scoring_function,
+    focus_productivity_difference_at_timestamp,
+    integrate_focus_productivity_difference,
+    integrate_series_difference,
 )
 
 __all__ = [
+    "DEFAULT_PRIORITY_MULTIPLIERS",
+    "MealConfig",
     "OptimizationConfig",
     "OptimizationResult",
     "ProductivityCurve",
     "Schedule",
+    "ScheduledMeal",
     "ScheduledTask",
+    "calculate_meal_spacing_penalty",
+    "calculate_tag_mismatch_penalty",
+    "calculate_task_tag_mismatch_overlap",
+    "create_focus_productivity_scoring_function",
+    "focus_productivity_difference_at_timestamp",
+    "get_priority_multiplier",
+    "integrate_focus_productivity_difference",
+    "integrate_series_difference",
+    "mutate_permutation",
     "optimize_schedule",
+    "parse_meals_from_weekly_schedule",
     "partially_mixed_crossover",
-    "mutate_permutation"
+    "populate_meals_for_schedule",
 ]
