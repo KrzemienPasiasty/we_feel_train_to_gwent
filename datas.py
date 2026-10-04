@@ -260,8 +260,10 @@ def load_tasks_from_json(json_filepath: str) -> list[Task]:
     return filled_tasks
 
 
-def fill_task(task: Task, autofill_focus, autofill_time) -> Task:
+def fill_task(task: Task = None, autofill_focus: bool = True, autofill_time: bool = True) -> Task:
     """Fill missing task fields using the LLM integration."""
+    if task is None:
+        task = Task()
     from llm import process_tasks_file
 
     return process_tasks_file(task, autofill_focus, autofill_time)

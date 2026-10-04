@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Callable, List, Optional
+import inspect
 import threading
 import customtkinter as ctk
 
@@ -160,39 +161,141 @@ class TaskFrame(ctk.CTkFrame):
             button.configure(fg_color=active_color)
 
     def _start_autofill(self):
-        self.autofill_btn.configure(state="disabled", text="Przetwarzanie (Oczekiwanie na odpowiedź)...")
-
-        def worker():
-            autofill_data = self.autofill_callback()
-            self.after(0, self._apply_autofill_data, autofill_data)
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def _apply_autofill_data(self, data: dict):
-        self.autofill_btn.configure(state="normal", text="Uzupełnij formularz przez AI")
-        if not data:
+        description = self.desc_entry.get("0.0", "end").strip()
+        if not description:
+            self.status_label.configure(
+                text="Podaj opis zadania przed uzyciem AI!",
+                text_color="orange"
+            )
             return
 
-        if "description" in data:
-            self.desc_entry.delete("0.0", "end")
-            self.desc_entry.insert("0.0", data["description"])
+        self.status_label.configure(text="AI analizuje zadanie...", text_color="white")
+        self.autofill_btn.configure(
+            state="disabled",
+            text="Przetwarzanie (Oczekiwanie na odpowiedz)..."
+        )
 
-        if "focus" in data:
-            self.focus_auto_cb.deselect()
-            self._toggle_focus_slider()
-            self.focus_slider.set(data["focus"])
+        time_val = self.time_entry.get().strip()
+        autofill_time = not bool(time_val)
+        autofill_focus = (self.focus_auto_cb.get() == 1)
 
-        if "priority" in data:
-            self.priority_slider.set(data["priority"])
+        # If neither is explicitly indicated as empty, user clicked AI to estimate both
+        if not autofill_time and not autofill_focus:
+            autofill_time = True
+            autofill_focus = True
 
-        if "time" in data:
-            self.time_entry.delete(0, "end")
-            self.time_entry.insert(0, data["time"])
+        task = Task()
+        task.description = description
+        task.time = time_val if not autofill_time else ""
+        task.focus = int(self.focus_slider.get()) if not autofill_focus else 0
+        task.priority = int(self.priority_slider.get())
+        task.tags = list(self.selected_tags)
 
-        if "tags" in data:
-            for tag in self.available_tags:
-                if tag.title in data["tags"] and tag not in self.selected_tags:
-                    self._toggle_tag(tag)
+        result_container = {"done": False, "data": None, "error": None}
+
+        def worker():
+            try:
+                callback = self.autofill_callback
+                res = None
+                if callable(callback):
+                    sig = inspect.signature(callback)
+                    param_count = len(sig.parameters)
+                    if param_count >= 3:
+                        res = callback(task, autofill_focus, autofill_time)
+                    elif param_count == 1:
+                        res = callback(task)
+                    else:
+                        res = callback(task, autofill_focus, autofill_time)
+                else:
+                    res = datas.fill_task(task, autofill_focus, autofill_time)
+
+                result_container["data"] = res
+            except Exception as e:
+                result_container["error"] = str(e)
+            finally:
+                result_container["done"] = True
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
+        def check_result():
+            if result_container["done"]:
+                if result_container["error"]:
+                    self._apply_autofill_error(result_container["error"])
+                else:
+                    self._apply_autofill_data(result_container["data"])
+            else:
+                self.after(100, check_result)
+
+        self.after(100, check_result)
+
+    def _apply_autofill_data(self, data):
+        self.autofill_btn.configure(state="normal", text="Uzupełnij formularz przez AI")
+        if not data:
+            self.status_label.configure(text="Brak danych z AI", text_color="orange")
+            return
+
+        if isinstance(data, Task):
+            if data.time:
+                self.time_entry.delete(0, "end")
+                self.time_entry.insert(0, str(data.time))
+
+            if data.focus is not None:
+                self.focus_auto_cb.deselect()
+                self._toggle_focus_slider()
+                f_val = float(data.focus)
+                if -5 <= f_val <= 5:
+                    f_val = f_val + 5
+                self.focus_slider.set(max(0, min(10, f_val)))
+
+            if getattr(data, "priority", None) is not None:
+                self.priority_slider.set(max(1, min(4, int(data.priority))))
+
+            if getattr(data, "tags", None):
+                for tag in data.tags:
+                    tag_title = tag.title if hasattr(tag, "title") else str(tag)
+                    for avail_tag in self.available_tags:
+                        if avail_tag.title == tag_title and avail_tag not in self.selected_tags:
+                            self._toggle_tag(avail_tag)
+
+            self.status_label.configure(text="Pola uzupelnione przez AI!", text_color="#4caf50")
+            self.after(4000, lambda: self.status_label.configure(text=""))
+            return
+
+        if isinstance(data, dict):
+            if "description" in data and data["description"]:
+                self.desc_entry.delete("0.0", "end")
+                self.desc_entry.insert("0.0", data["description"])
+
+            if "focus" in data and data["focus"] is not None:
+                self.focus_auto_cb.deselect()
+                self._toggle_focus_slider()
+                f_val = float(data["focus"])
+                if -5 <= f_val <= 5:
+                    f_val = f_val + 5
+                self.focus_slider.set(max(0, min(10, f_val)))
+
+            if "priority" in data and data["priority"] is not None:
+                self.priority_slider.set(max(1, min(4, int(data["priority"]))))
+
+            if "time" in data and data["time"]:
+                self.time_entry.delete(0, "end")
+                self.time_entry.insert(0, str(data["time"]))
+
+            if "tags" in data and data["tags"]:
+                for tag_item in data["tags"]:
+                    tag_title = tag_item.title if hasattr(tag_item, "title") else str(tag_item)
+                    for avail_tag in self.available_tags:
+                        if avail_tag.title == tag_title and avail_tag not in self.selected_tags:
+                            self._toggle_tag(avail_tag)
+
+            self.status_label.configure(text="Pola uzupelnione przez AI!", text_color="#4caf50")
+            self.after(4000, lambda: self.status_label.configure(text=""))
+
+    def _apply_autofill_error(self, err_msg: str):
+        self.autofill_btn.configure(state="normal", text="Uzupełnij formularz przez AI")
+        self.status_label.configure(text=f"Blad AI: {err_msg}", text_color="red")
+        self.after(6000, lambda: self.status_label.configure(text=""))
 
     def _submit_task(self):
         new_task = Task()
@@ -233,7 +336,7 @@ class TaskFrame(ctk.CTkFrame):
         # Wywołanie funkcji z datas.py
         datas.add_task(new_task, autofill_focus, autofill_time)
 
-        self.status_label.configure(text="✓ Zadanie zostało pomyślnie dodane!", text_color="#4caf50")
+        self.status_label.configure(text="Zadanie zostalo pomyslnie dodane!", text_color="#4caf50")
         self.after(3500, lambda: self.status_label.configure(text=""))
 
         if self.on_task_added:
