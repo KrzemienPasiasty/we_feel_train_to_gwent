@@ -1,6 +1,6 @@
 # Dziennik Przemyśleń AI na temat zadań
 
-## 📝 Zaplanować urlop - Kupić bilety do Włoch i wynająć hotel
-- **Wygenerowano:** Czas: `01:30:00` | Skupienie: `2` | Priorytet: `3`
-- **Przemyślenia AI:** Zadanie obejmuje planowanie urlopu, co zazwyczaj wymaga nieco skupienia na budżecie oraz organizacji. Oszacowałem czas na 1,5 godziny, co jest wystarczające na przeszukanie ofert oraz dokonanie rezerwacji. Priorytet oceniłem na 3, ponieważ planowanie podróży jest istotne, ale nie jest to naglące zadanie.
+## 📝 nauczyć się na kartkówkę u pani Joanny Czub
+- **Wygenerowano:** Czas: `01:30:00` | Skupienie: `4`
+- **Przemyślenia AI:** Zadanie polega na nauce do kartkówki, co zazwyczaj wymaga skoncentrowanej pracy oraz odpowiedniego przygotowania. Czas 1,5 godziny (90 minut) wydaje się adekwatny, aby przyswoić materiał i powtórzyć kluczowe informacje, a skupienie na poziomie 4 zakłada intensywną pracę umysłową.
 

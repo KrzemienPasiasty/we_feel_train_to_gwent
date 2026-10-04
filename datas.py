@@ -6,6 +6,9 @@ from task import Task # Zakładamy, że ten plik (task.py) istnieje obok
 from llm import process_tasks_file
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 69fee07 (llm while adding new task work)
 current_tasks_list = []
 done_tasks_list = []
 tags_list = []
@@ -51,6 +54,7 @@ def add_task(task: Task, autofill_focus, autofill_time):
 
 
 
+<<<<<<< HEAD
 =======
 def fill_task(empty_task: Task, task_data: dict) -> Task:
     """
@@ -82,6 +86,8 @@ def fill_task(empty_task: Task, task_data: dict) -> Task:
         
     return empty_task
 >>>>>>> 61f7828 (task creation developed, date chooser better, datas moved to datas)
+=======
+>>>>>>> 69fee07 (llm while adding new task work)
 
 def load_tasks_from_json(json_filepath: str) -> list[Task]:
     """
@@ -112,6 +118,7 @@ def fill_task(task: Task, autofill_focus, autofill_time) -> Task:
     Automatyzuje cały proces: zapis do pliku, call AI, odczyt i mapowanie.
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
     print("2. Uruchamiam sztuczną inteligencję (llm.py)...")
@@ -125,15 +132,17 @@ def fill_task(task: Task, autofill_focus, autofill_time) -> Task:
     print("\n1. Zapisuję surowe dane do 'input.json'...")
     with open('input.json', 'w', encoding='utf-8') as f:
         json.dump(surowe_zadania, f, indent=4, ensure_ascii=False)
+=======
+
+>>>>>>> 69fee07 (llm while adding new task work)
 
     print("2. Uruchamiam sztuczną inteligencję (llm.py)...")
     # Callujemy Twoją funkcję z pliku llm.py
-    process_tasks_file('input.json', 'output.json', 'ai_thoughts.md')
+    task = process_tasks_file(task, autofill_focus, autofill_time )
 
-    print("3. Pobieram dane z 'output.json' i tworzę pełne obiekty Task...")
-    gotowe_obiekty = load_tasks_from_json('output.json')
-
-    return gotowe_obiekty
+    print("datas.py 88 działa")
+    print(task)
+    return task
 
 
 # --- PRZYKŁAD UŻYCIA ---

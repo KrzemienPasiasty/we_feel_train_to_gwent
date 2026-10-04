@@ -10,16 +10,21 @@ class Task:
         self.deadline: Optional[datetime] = None
         self.time: Optional[datetime] = None
         """ required time to spend at task"""
-        self.focus: int = None
+        self.focus: float | int
         self.priority: int = 1
         self.tags: List[Tag] = []
-        self.llm_metadata: str = ""
 
     def __repr__(self) -> str:
-        tags_str = [t.title if hasattr(t, "title") else str(t) for t in self.tags]
         return (
-            f"Task(id={self.id}, description={self.description!r}, "
-            f"deadline={self.deadline}, priority={self.priority}, tags={tags_str})"
+            f"Task("
+            f"  id={self.id},"
+            f"  description={self.description!r},"
+            f"  deadline={self.deadline!r},"
+            f"  time={self.time!r},"
+            f"  focus={self.focus!r},"
+            f"  priority={self.priority!r},"
+            f"  tags={self.tags!r}"
+            f")"
         )
 
 
@@ -219,19 +224,19 @@ class TaskFrame(ctk.CTkFrame):
 
     def _submit_task(self):
         new_task = Task()
-        needed_autofill = False
+        autofill_focus, autofill_time = False, False
 
         # Sprawdzanie Time
         time_input = self.time_entry.get().strip()
         if not time_input:
-            needed_autofill = True
+            autofill_time = True
             new_task.time = ""
         else:
             new_task.time = time_input
 
         # Sprawdzanie Focus
         if self.focus_auto_cb.get() == 1:
-            needed_autofill = True
+            autofill_focus = True
             new_task.focus = 0
         else:
             new_task.focus = int(self.focus_slider.get())
@@ -250,7 +255,7 @@ class TaskFrame(ctk.CTkFrame):
         new_task.tags = self.selected_tags
 
         # Wywołanie funkcji z datas.py
-        datas.add_task(new_task, needed_autofill)
+        datas.add_task(new_task, autofill_focus, autofill_time)
 
         self._clear_form()
 
