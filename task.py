@@ -129,8 +129,8 @@ class TaskFrame(ctk.CTkFrame):
         self.focus_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.focus_frame.pack(fill="x", padx=20, pady=(0, 10))
 
-        self.focus_slider = ctk.CTkSlider(self.focus_frame, from_=0, to=10, number_of_steps=10)
-        self.focus_slider.set(5)
+        self.focus_slider = ctk.CTkSlider(self.focus_frame, from_=-5, to=5, number_of_steps=10)
+        self.focus_slider.set(0)  # 0 to teraz środek skali (neutralne)
         self.focus_slider.pack(side="left", expand=True, fill="x", padx=(0, 10))
 
         self.focus_auto_cb = ctk.CTkCheckBox(self.focus_frame, text="Auto (puste)", command=self._toggle_focus_slider)
@@ -192,11 +192,39 @@ class TaskFrame(ctk.CTkFrame):
         self.autofill_btn.configure(state="disabled", text="Przetwarzanie (Oczekiwanie na odpowiedź)...")
 
         def worker():
-            autofill_data = self.autofill_callback()
-            self.after(0, self._apply_autofill_data, autofill_data)
+            try:
+                # 1. Zbieramy aktualnie wpisany opis, żeby LLM wiedział co analizuje
+                temp_task = Task()
+                temp_task.description = self.desc_entry.get("0.0", "end").strip()
+                
+                # 2. Sprawdzamy, które pola użytkownik zaznaczył do uzupełnienia
+                time_input = self.time_entry.get().strip()
+                autofill_time = not bool(time_input)
+                temp_task.time = time_input if not autofill_time else ""
 
+                autofill_focus = (self.focus_auto_cb.get() == 1)
+                temp_task.focus = 0 if autofill_focus else int(self.focus_slider.get())
+
+                # 3. Wywołujemy AI (datas.fill_task pod spodem używa llm.process_tasks_file)
+                filled_task = self.autofill_callback(temp_task, autofill_focus, autofill_time)
+
+                # 4. Mapujemy obiekt Task na słownik, którego oczekuje metoda _apply_autofill_data
+                result_dict = {}
+                if autofill_time:
+                    result_dict["time"] = filled_task.time
+                if autofill_focus:
+                    result_dict["focus"] = filled_task.focus
+
+                # Aktualizacja GUI (musimy to zrobić na głównym wątku przez after)
+                self.after(0, self._apply_autofill_data, result_dict)
+
+            except Exception as e:
+                print(f"Błąd podczas łączenia z LLM: {e}")
+                # W razie błędu odblokowujemy przycisk przekazując pusty słownik
+                self.after(0, self._apply_autofill_data, {}) 
+
+        # Odpalamy jako wątek poboczny, aby nie zawiesić całego interfejsu (GUI)
         threading.Thread(target=worker, daemon=True).start()
-
     def _apply_autofill_data(self, data: dict):
         self.autofill_btn.configure(state="normal", text="Uzupełnij formularz przez AI")
         if not data:
@@ -264,7 +292,7 @@ class TaskFrame(ctk.CTkFrame):
         now = datetime.now()
         self.desc_entry.delete("0.0", "end")
         self.time_entry.delete(0, "end")
-        self.focus_slider.set(5)
+        self.focus_slider.set(0)
         self.priority_slider.set(1)
         self.focus_auto_cb.deselect()
         self._toggle_focus_slider()
