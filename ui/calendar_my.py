@@ -1,5 +1,7 @@
 from datetime import datetime, time, timedelta, date
 from typing import Callable, Optional, List, Any, Dict
+import json
+from pathlib import Path
 import threading
 import customtkinter as ctk
 
@@ -175,13 +177,14 @@ class AddTagToTimeDialog(ctk.CTkToplevel):
     """Okno dialogowe do przypisywania tagów do przedziałów czasu w WeeklySchedule."""
 
     PRESET_COLORS = [
-        ("#0078d4", (0, 120, 212)),    # Niebieski
+        ("#E169FF", (225, 105, 255)),  # FutureFlow Neon Magenta
+        ("#571FA0", (87, 31, 160)),    # Deep Violet
+        ("#D83CFF", (216, 60, 255)),   # Vivid Magenta
+        ("#0078d4", (0, 120, 212)),    # DeepFocus Niebieski
         ("#107c10", (16, 124, 16)),    # Zielony
         ("#c42b1c", (196, 43, 28)),    # Czerwony
         ("#ca5010", (202, 80, 16)),    # Pomarańczowy
-        ("#7e49bc", (126, 73, 188)),   # Fioletowy
         ("#0099bc", (0, 153, 188)),    # Turkusowy
-        ("#c4529d", (196, 82, 157)),   # Różowy
         ("#78716c", (120, 113, 108)),  # Szary
     ]
     DAY_LABELS = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"]
@@ -477,6 +480,10 @@ class AddTagToTimeDialog(ctk.CTkToplevel):
             )
             datas.tags_list.append(target_tag)
             datas.save_tags_list_to_json(datas.tags_list, "tags.json")
+        else:
+            if getattr(target_tag, "color", None) != self.selected_color:
+                target_tag.color = self.selected_color
+                datas.save_tags_list_to_json(datas.tags_list, "tags.json")
 
         if not datas.weekly_schedule_list:
             datas.weekly_schedule_list.append(WeeklySchedule())
@@ -634,9 +641,10 @@ class CalendarFrame(ctk.CTkFrame):
         self.add_tag_time_btn = ctk.CTkButton(
             right_box,
             text="🏷️ Dodaj tag do czasu",
-            width=135,
-            fg_color="#1f538d",
-            hover_color="#14375e",
+            width=145,
+            fg_color="#571FA0",
+            hover_color="#6e28c7",
+            font=ctk.CTkFont(weight="bold"),
             command=self.open_add_tag_to_time_dialog,
         )
         self.add_tag_time_btn.pack(side="left", padx=(0, 8))
@@ -645,8 +653,8 @@ class CalendarFrame(ctk.CTkFrame):
             right_box,
             text="⟳ Odśwież",
             width=80,
-            fg_color=("gray75", "gray28"),
-            hover_color=("gray65", "gray38"),
+            fg_color=("gray75", "#2a2238"),
+            hover_color=("gray65", "#382e4a"),
             command=self.refresh,
         )
         self.refresh_btn.pack(side="left", padx=(0, 8))
@@ -654,8 +662,9 @@ class CalendarFrame(ctk.CTkFrame):
         self.organize_btn = ctk.CTkButton(
             right_box,
             text="⚡ Organize My Tasks",
-            fg_color="#2e7d32",
-            hover_color="#1b5e20",
+            fg_color="#E169FF",
+            hover_color="#D83CFF",
+            text_color="black",
             font=ctk.CTkFont(size=13, weight="bold"),
             command=self.organize_tasks,
         )
@@ -1047,6 +1056,18 @@ class CalendarFrame(ctk.CTkFrame):
         )
 
         now_dt = datetime.now()
+        # On Sunday the selected current week has no useful planning days left.
+        # Roll to the next full week so a weekly optimization creates a usable
+        # plan for the upcoming Monday onward instead of placing everything today.
+        if (
+            self.is_weekly_view
+            and now_dt.weekday() == 6
+            and monday_dt.date() == now_dt.date() - timedelta(days=6)
+        ):
+            monday_dt += timedelta(days=7)
+            self.target_date = monday_dt
+            self._update_period_label()
+
         week_end = monday_dt + timedelta(days=6, hours=23, minutes=59)
         if week_end < now_dt:
             self.status_label.configure(
@@ -1066,7 +1087,18 @@ class CalendarFrame(ctk.CTkFrame):
                 from optimizer import optimize_schedule, OptimizationConfig
 
                 ws = datas.weekly_schedule_list[0] if datas.weekly_schedule_list else WeeklySchedule()
-                curve = [0.5] * 96
+                curve_file = Path(__file__).resolve().parents[1] / "productivity_curve.json"
+                with curve_file.open("r", encoding="utf-8") as file:
+                    curve_data = json.load(file)
+                curve = curve_data.get("values") if isinstance(curve_data, dict) else curve_data
+                if (
+                    not isinstance(curve, list)
+                    or len(curve) != 96
+                    or any(not isinstance(value, (int, float)) or not 0 <= value <= 1 for value in curve)
+                ):
+                    raise ValueError(
+                        f"{curve_file.name} must contain exactly 96 numeric productivity values between 0 and 1."
+                    )
 
                 cfg = OptimizationConfig(
                     reference_date=monday_dt,

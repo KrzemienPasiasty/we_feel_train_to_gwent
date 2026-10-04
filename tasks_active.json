@@ -1,35 +1,3083 @@
 [
-  {
-    "id": 101,
-    "description": "Przygotowanie prezentacji kwartalnej dla zarządu",
-    "start": "2026-10-05T09:00:00",
-    "deadline": "2026-10-07T12:00:00",
-    "time": "1970-01-01T04:00:00",
-    "focus": 0.9,
-    "priority": 1,
-    "tags": ["Praca", "Zarząd"],
-"assigned_time": "2026-10-14T15:00:00"
-},
-  {
-    "id": 102,
-    "description": "Przegląd kodu (Code Review) modułu autoryzacji",
-    "start": "2026-10-06T13:00:00",
-    "deadline": "2026-10-06T17:00:00",
-    "time": "1970-01-01T01:30:00",
-    "focus": 0.75,
-    "priority": 2,
-    "tags": ["IT", "Code Review"    ],
-"assigned_time": "2026-10-14T15:00:00"
-  },
-  {
-    "id": 103,
-    "description": "Aktualizacja dokumentacji projektowej w Confluence",
-    "start": "2026-10-12T10:00:00",
-    "deadline": "2026-10-16T15:00:00",
-    "time": "1970-01-01T05:00:00",
-    "focus": 0.5,
-    "priority": 3,
-    "tags":[ "Dokumentacja"]   ,  
-	"assigned_time": "2026-10-14T15:00:00"
-  }
+    {
+        "id": 101,
+        "description": "Przygotowanie prezentacji kwartalnej dla zarządu",
+        "start": "2026-10-05T09:00:00",
+        "deadline": "2026-10-07T12:00:00",
+        "time": "1970-01-01T04:00:00",
+        "focus": 0.9,
+        "priority": 1,
+        "tags": [
+            "Praca",
+            "Zarząd"
+        ],
+        "assigned_time": "2026-10-14T15:00:00"
+    },
+    {
+        "id": 102,
+        "description": "Przegląd kodu (Code Review) modułu autoryzacji",
+        "start": "2026-10-06T13:00:00",
+        "deadline": "2026-10-06T17:00:00",
+        "time": "1970-01-01T01:30:00",
+        "focus": 0.75,
+        "priority": 2,
+        "tags": [
+            "IT",
+            "Code Review"
+        ],
+        "assigned_time": "2026-10-14T15:00:00"
+    },
+    {
+        "id": 103,
+        "description": "Aktualizacja dokumentacji projektowej w Confluence",
+        "start": "2026-10-12T10:00:00",
+        "deadline": "2026-10-16T15:00:00",
+        "time": "1970-01-01T05:00:00",
+        "focus": 0.5,
+        "priority": 3,
+        "tags": [
+            "Dokumentacja"
+        ],
+        "assigned_time": "2026-10-14T15:00:00"
+    },
+    {
+        "id": 104,
+        "description": "Produkcja części",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 105,
+        "description": "Rozwój oprogramowania",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 106,
+        "description": "Projekt Elektroniczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 107,
+        "description": "Projekt mechaniczny",
+        "start": null,
+        "deadline": "2026-02-28T03:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 108,
+        "description": "Ewaluacja i utrzymanie",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 109,
+        "description": "Pierwszy start",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 110,
+        "description": "Przygotowanie do startu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 111,
+        "description": "Certyfikacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 112,
+        "description": "Testowanie i walidacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 113,
+        "description": "Montaż",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 114,
+        "description": "Integracja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 115,
+        "description": "Projektowanie Systemowe",
+        "start": null,
+        "deadline": "2026-03-31T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 116,
+        "description": "Alten",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 117,
+        "description": "Creotech",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 118,
+        "description": "SEP",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 5,
+                "name": "kursy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 119,
+        "description": "powrót w gwiazd",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 120,
+        "description": "Kongres futorologiczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 121,
+        "description": "nowy wspaniały świat",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 122,
+        "description": "Folwark zwierzęcy",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 123,
+        "description": "Mechaniczna Pomrańcza",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 124,
+        "description": "koniec maskarady",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 125,
+        "description": "chór świtu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 126,
+        "description": "Pieśń jutra",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 127,
+        "description": "Nauczyć się makr",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 9,
+                "name": "Personal List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 128,
+        "description": "Silniki vassimira",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 129,
+        "description": "Zakon drzewa pomarańczy cz. 2",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 130,
+        "description": "Zakon drzewa pomarańczy cz. 1",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 131,
+        "description": "Harmonijka",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 132,
+        "description": "Egocentryzm///altruizm",
+        "start": null,
+        "deadline": "2026-10-08T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 133,
+        "description": "Radioteleskop",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 134,
+        "description": "Działanie anten ",
+        "start": null,
+        "deadline": "2026-10-07T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 135,
+        "description": "Nauczyć się statystyki, niepewności, krzywych najlepszego dopasowania",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 136,
+        "description": "Produkcja części",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 137,
+        "description": "Rozwój oprogramowania",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 138,
+        "description": "Projekt Elektroniczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 139,
+        "description": "Projekt mechaniczny",
+        "start": null,
+        "deadline": "2026-02-28T03:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 140,
+        "description": "Ewaluacja i utrzymanie",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 141,
+        "description": "Pierwszy start",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 142,
+        "description": "Przygotowanie do startu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 143,
+        "description": "Certyfikacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 144,
+        "description": "Testowanie i walidacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 145,
+        "description": "Montaż",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 146,
+        "description": "Integracja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 147,
+        "description": "Projektowanie Systemowe",
+        "start": null,
+        "deadline": "2026-03-31T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 148,
+        "description": "Alten",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 149,
+        "description": "Creotech",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 150,
+        "description": "SEP",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 5,
+                "name": "kursy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 151,
+        "description": "powrót w gwiazd",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 152,
+        "description": "Kongres futorologiczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 153,
+        "description": "nowy wspaniały świat",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 154,
+        "description": "Folwark zwierzęcy",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 155,
+        "description": "Mechaniczna Pomrańcza",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 156,
+        "description": "koniec maskarady",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 157,
+        "description": "chór świtu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 158,
+        "description": "Pieśń jutra",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 159,
+        "description": "Nauczyć się makr",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 9,
+                "name": "Personal List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 160,
+        "description": "Silniki vassimira",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 161,
+        "description": "Zakon drzewa pomarańczy cz. 2",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 162,
+        "description": "Zakon drzewa pomarańczy cz. 1",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 163,
+        "description": "Harmonijka",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 164,
+        "description": "Egocentryzm///altruizm",
+        "start": null,
+        "deadline": "2026-10-08T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 165,
+        "description": "Radioteleskop",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 166,
+        "description": "Działanie anten ",
+        "start": null,
+        "deadline": "2026-10-07T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 167,
+        "description": "Nauczyć się statystyki, niepewności, krzywych najlepszego dopasowania",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 168,
+        "description": "Produkcja części",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 169,
+        "description": "Rozwój oprogramowania",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 170,
+        "description": "Projekt Elektroniczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 171,
+        "description": "Projekt mechaniczny",
+        "start": null,
+        "deadline": "2026-02-28T03:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 172,
+        "description": "Ewaluacja i utrzymanie",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 173,
+        "description": "Pierwszy start",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 174,
+        "description": "Przygotowanie do startu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 175,
+        "description": "Certyfikacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 176,
+        "description": "Testowanie i walidacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 177,
+        "description": "Montaż",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 178,
+        "description": "Integracja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 179,
+        "description": "Projektowanie Systemowe",
+        "start": null,
+        "deadline": "2026-03-31T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 180,
+        "description": "Alten",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 181,
+        "description": "Creotech",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 182,
+        "description": "SEP",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 5,
+                "name": "kursy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 183,
+        "description": "powrót w gwiazd",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 184,
+        "description": "Kongres futorologiczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 185,
+        "description": "nowy wspaniały świat",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 186,
+        "description": "Folwark zwierzęcy",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 187,
+        "description": "Mechaniczna Pomrańcza",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 188,
+        "description": "koniec maskarady",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 189,
+        "description": "chór świtu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 190,
+        "description": "Pieśń jutra",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 191,
+        "description": "Nauczyć się makr",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 9,
+                "name": "Personal List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 192,
+        "description": "Silniki vassimira",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 193,
+        "description": "Zakon drzewa pomarańczy cz. 2",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 194,
+        "description": "Zakon drzewa pomarańczy cz. 1",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 195,
+        "description": "Harmonijka",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 196,
+        "description": "Egocentryzm///altruizm",
+        "start": null,
+        "deadline": "2026-10-08T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 197,
+        "description": "Radioteleskop",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 198,
+        "description": "Działanie anten ",
+        "start": null,
+        "deadline": "2026-10-07T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 199,
+        "description": "Nauczyć się statystyki, niepewności, krzywych najlepszego dopasowania",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 200,
+        "description": "Produkcja części",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 201,
+        "description": "Rozwój oprogramowania",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 202,
+        "description": "Projekt Elektroniczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 203,
+        "description": "Projekt mechaniczny",
+        "start": null,
+        "deadline": "2026-02-28T03:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 204,
+        "description": "Ewaluacja i utrzymanie",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 205,
+        "description": "Pierwszy start",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 206,
+        "description": "Przygotowanie do startu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 207,
+        "description": "Certyfikacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 208,
+        "description": "Testowanie i walidacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 209,
+        "description": "Montaż",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 210,
+        "description": "Integracja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 211,
+        "description": "Projektowanie Systemowe",
+        "start": null,
+        "deadline": "2026-03-31T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 212,
+        "description": "Alten",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 213,
+        "description": "Creotech",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 214,
+        "description": "SEP",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 5,
+                "name": "kursy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 215,
+        "description": "powrót w gwiazd",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 216,
+        "description": "Kongres futorologiczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 217,
+        "description": "nowy wspaniały świat",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 218,
+        "description": "Folwark zwierzęcy",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 219,
+        "description": "Mechaniczna Pomrańcza",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 220,
+        "description": "koniec maskarady",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 221,
+        "description": "chór świtu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 222,
+        "description": "Pieśń jutra",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 223,
+        "description": "Nauczyć się makr",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 9,
+                "name": "Personal List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 224,
+        "description": "Silniki vassimira",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 225,
+        "description": "Zakon drzewa pomarańczy cz. 2",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 226,
+        "description": "Zakon drzewa pomarańczy cz. 1",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 227,
+        "description": "Harmonijka",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 228,
+        "description": "Egocentryzm///altruizm",
+        "start": null,
+        "deadline": "2026-10-08T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 229,
+        "description": "Radioteleskop",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 230,
+        "description": "Działanie anten ",
+        "start": null,
+        "deadline": "2026-10-07T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 231,
+        "description": "Nauczyć się statystyki, niepewności, krzywych najlepszego dopasowania",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 232,
+        "description": "Produkcja części",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 233,
+        "description": "Rozwój oprogramowania",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 234,
+        "description": "Projekt Elektroniczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 235,
+        "description": "Projekt mechaniczny",
+        "start": null,
+        "deadline": "2026-02-28T03:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 236,
+        "description": "Ewaluacja i utrzymanie",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 237,
+        "description": "Pierwszy start",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 238,
+        "description": "Przygotowanie do startu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 239,
+        "description": "Certyfikacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 240,
+        "description": "Testowanie i walidacja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 241,
+        "description": "Montaż",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 242,
+        "description": "Integracja",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 243,
+        "description": "Projektowanie Systemowe",
+        "start": null,
+        "deadline": "2026-03-31T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 244,
+        "description": "Alten",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 245,
+        "description": "Creotech",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 4,
+                "name": "gdzie wysłać CV"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 246,
+        "description": "SEP",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 5,
+                "name": "kursy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 247,
+        "description": "powrót w gwiazd",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 248,
+        "description": "Kongres futorologiczny",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 6,
+                "name": "Lem"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 249,
+        "description": "nowy wspaniały świat",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 250,
+        "description": "Folwark zwierzęcy",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 251,
+        "description": "Mechaniczna Pomrańcza",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 7,
+                "name": "inne"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 252,
+        "description": "koniec maskarady",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 253,
+        "description": "chór świtu",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 254,
+        "description": "Pieśń jutra",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 8,
+                "name": "czas żniw"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 255,
+        "description": "Nauczyć się makr",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 9,
+                "name": "Personal List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 256,
+        "description": "Silniki vassimira",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 257,
+        "description": "Zakon drzewa pomarańczy cz. 2",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 258,
+        "description": "Zakon drzewa pomarańczy cz. 1",
+        "start": null,
+        "deadline": null,
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 10,
+                "name": "zakon drzewa pomarańczy"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 259,
+        "description": "Harmonijka",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 260,
+        "description": "Egocentryzm///altruizm",
+        "start": null,
+        "deadline": "2026-10-08T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 1,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 261,
+        "description": "Radioteleskop",
+        "start": null,
+        "deadline": "2026-10-05T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 262,
+        "description": "Działanie anten ",
+        "start": null,
+        "deadline": "2026-10-07T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 2,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    },
+    {
+        "id": 263,
+        "description": "Nauczyć się statystyki, niepewności, krzywych najlepszego dopasowania",
+        "start": null,
+        "deadline": "2026-10-06T02:00:00+00:00",
+        "time": null,
+        "focus": 5,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 3,
+                "name": "List"
+            }
+        ],
+        "llm_metadata": "",
+        "source": "import",
+        "external_id": null,
+        "status": "not_started"
+    }
 ]

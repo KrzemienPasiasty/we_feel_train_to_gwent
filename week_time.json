@@ -38,710 +38,38 @@
                 [],
                 [],
                 [],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
                 [],
                 [],
                 [],
@@ -808,390 +136,126 @@
                 [],
                 [],
                 [],
+                [],
+                [],
+                [],
+                [],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
                 [
                     {
-                        "id": 2,
-                        "title": "PRACA",
+                        "id": 1,
+                        "title": "CyberFlowResearch",
                         "color": [
-                            202,
-                            80,
-                            16
+                            225,
+                            105,
+                            255
                         ],
                         "is_interactive": true
                     }
                 ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
                 [],
                 [],
                 [],
@@ -1258,710 +322,38 @@
                 [],
                 [],
                 [],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    },
-                    {
-                        "id": 1,
-                        "title": "DeepFocus",
-                        "color": [
-                            0,
-                            120,
-                            212
-                        ],
-                        "is_interactive": true
-                    }
-                ],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
                 [],
                 [],
                 [],
@@ -2028,390 +420,38 @@
                 [],
                 [],
                 [],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
                 [],
                 [],
                 [],
@@ -2478,390 +518,38 @@
                 [],
                 [],
                 [],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
-                [
-                    {
-                        "id": 2,
-                        "title": "PRACA",
-                        "color": [
-                            202,
-                            80,
-                            16
-                        ],
-                        "is_interactive": true
-                    }
-                ],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
                 [],
                 [],
                 [],

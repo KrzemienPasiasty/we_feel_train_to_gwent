@@ -4,10 +4,8 @@ import os
 import threading
 from datetime import datetime
 from pathlib import Path
-from tkinter import filedialog
 
-import googleAPI
-import MicrosoftAPI
+from apis import clickUpAPI, MicrosoftAPI
 import datas
 from tag import Tag
 
@@ -141,178 +139,103 @@ def _json_value(value):
 
 
 class SyncFrame(ctk.CTkFrame):
+    """Connect task services and import their tasks into FutureFlow."""
     def __init__(self, master, on_data_changed=None, **kwargs):
         super().__init__(master, **kwargs)
         self.on_data_changed = on_data_changed
+        ctk.CTkLabel(self, text="Task integrations", font=ctk.CTkFont(size=20, weight="bold")).pack(anchor="w", padx=24, pady=(20, 8))
+        ctk.CTkLabel(self, text="Connect external task services and import your tasks.", text_color="gray").pack(anchor="w", padx=24, pady=(0, 14))
 
-        self.title_label = ctk.CTkLabel(self, text="Integracje i Import", font=ctk.CTkFont(size=20, weight="bold"))
-        self.title_label.pack(pady=(10, 12))
+        self.clickup_token = ctk.CTkEntry(self, placeholder_text="ClickUp personal API token", show="?")
+        self.clickup_token.pack(fill="x", padx=24, pady=6)
+        self.microsoft_client_id = ctk.CTkEntry(self, placeholder_text="Microsoft app client ID")
+        self.microsoft_client_id.pack(fill="x", padx=24, pady=6)
+        self.save_button = ctk.CTkButton(self, text="Save connections", command=self._save_credentials)
+        self.save_button.pack(anchor="e", padx=24, pady=8)
 
-        settings_frame = ctk.CTkFrame(self)
-        settings_frame.pack(fill="x", padx=20, pady=(0, 10))
-
-        ctk.CTkLabel(settings_frame, text="Google OAuth credentials.json (Desktop app)").pack(anchor="w", padx=12, pady=(10, 2))
-        google_row = ctk.CTkFrame(settings_frame, fg_color="transparent")
-        google_row.pack(fill="x", padx=12, pady=(0, 8))
-        self.google_credentials_entry = ctk.CTkEntry(
-            google_row,
-            placeholder_text="Wklej ścieżkę do pliku credentials.json lub wybierz plik",
-        )
-        self.google_credentials_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
-        ctk.CTkButton(google_row, text="Przeglądaj...", width=110, command=self._browse_google_credentials).pack(side="right")
-
-        ctk.CTkLabel(settings_frame, text="Microsoft Application (client) ID").pack(anchor="w", padx=12, pady=(2, 2))
-        self.microsoft_client_id_entry = ctk.CTkEntry(
-            settings_frame,
-            placeholder_text="Wklej client ID z Azure App registrations",
-        )
-        self.microsoft_client_id_entry.pack(fill="x", padx=12, pady=(0, 10))
-
-        ctk.CTkButton(settings_frame, text="Zapisz ustawienia API", command=self._save_api_settings).pack(
-            anchor="e", padx=12, pady=(0, 10)
-        )
-
-        self.google_btn = ctk.CTkButton(self, text="Pobierz z Google Tasks", command=lambda: self._start_import("google"))
-        self.google_btn.pack(pady=8, fill="x", padx=40)
-
-        self.ms_btn = ctk.CTkButton(self, text="Pobierz z Microsoft", command=lambda: self._start_import("microsoft"))
-        self.ms_btn.pack(pady=8, fill="x", padx=40)
-
-        self.status_label = ctk.CTkLabel(self, text="", text_color="gray", wraplength=1000, justify="left")
-        self.status_label.pack(pady=12, padx=12, fill="x")
-
-        self.imported_tasks_label = ctk.CTkLabel(self, text="Ostatnio dodane zadania")
-        self.imported_tasks_label.pack(anchor="w", padx=40, pady=(0, 4))
-        self.imported_tasks_box = ctk.CTkTextbox(self, height=90, wrap="word")
-        self.imported_tasks_box.pack(fill="both", expand=True, padx=40, pady=(0, 10))
+        buttons = ctk.CTkFrame(self, fg_color="transparent")
+        buttons.pack(fill="x", padx=24, pady=8)
+        self.clickup_btn = ctk.CTkButton(buttons, text="Connect ClickUp and import", command=lambda: self._start_import("clickup"))
+        self.clickup_btn.pack(fill="x", pady=5)
+        self.ms_btn = ctk.CTkButton(buttons, text="Connect Microsoft To Do and import", command=lambda: self._start_import("microsoft"))
+        self.ms_btn.pack(fill="x", pady=5)
+        self.status_label = ctk.CTkLabel(self, text="", text_color="gray", wraplength=900)
+        self.status_label.pack(fill="x", padx=24, pady=10)
+        self.imported_tasks_box = ctk.CTkTextbox(self, height=180)
+        self.imported_tasks_box.pack(fill="both", expand=True, padx=24, pady=(0, 20))
+        self.imported_tasks_box.insert("1.0", "Imported tasks will appear here.")
         self.imported_tasks_box.configure(state="disabled")
-        self._load_api_settings()
+        self._load_credentials()
 
-    def _load_api_settings(self):
+    def _load_credentials(self):
         try:
-            settings = {}
-            if SETTINGS_FILE.exists():
-                with SETTINGS_FILE.open("r", encoding="utf-8") as file:
-                    settings = json.load(file)
+            with Path(clickUpAPI.UNIFIED_CREDENTIALS_FILE).open("r", encoding="utf-8") as f:
+                credentials = json.load(f)
+            clickup = credentials.get("clickup", {}).get("api_token", "")
+            microsoft = credentials.get("microsoft", {}).get("client_id", "")
+            if clickup and clickup != "YOUR_CLICKUP_PERSONAL_API_TOKEN":
+                self.clickup_token.insert(0, clickup)
+            if microsoft and microsoft != "YOUR_MICROSOFT_CLIENT_ID":
+                self.microsoft_client_id.insert(0, microsoft)
+        except (OSError, json.JSONDecodeError, AttributeError):
+            pass
 
-            default_google_path = str(googleAPI.CREDENTIALS_FILE) if Path(googleAPI.CREDENTIALS_FILE).is_file() else ""
-            google_path = settings.get("google_credentials_path", default_google_path)
-            if google_path:
-                self.google_credentials_entry.insert(0, google_path)
-                googleAPI.CREDENTIALS_FILE = str(Path(google_path).expanduser())
-
-            microsoft_id = os.environ.get("MICROSOFT_CLIENT_ID", "").strip()
-            if not microsoft_id and Path(MicrosoftAPI.CREDENTIALS_FILE).exists():
-                with Path(MicrosoftAPI.CREDENTIALS_FILE).open("r", encoding="utf-8") as file:
-                    microsoft_id = json.load(file).get("client_id", "")
-            if microsoft_id and microsoft_id != "YOUR_MICROSOFT_CLIENT_ID":
-                self.microsoft_client_id_entry.insert(0, microsoft_id)
-        except (OSError, json.JSONDecodeError, AttributeError, TypeError) as error:
-            self.status_label.configure(text=f"Nie można wczytać ustawień API: {error}", text_color="red")
-
-    def _browse_google_credentials(self):
-        selected_path = filedialog.askopenfilename(
-            title="Wybierz Google OAuth credentials.json",
-            initialdir=str(BASE_DIR),
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-        )
-        if selected_path:
-            self.google_credentials_entry.delete(0, "end")
-            self.google_credentials_entry.insert(0, selected_path)
-
-    def _save_api_settings(self, show_success=True, for_source=None):
+    def _save_credentials(self):
         try:
-            settings = {}
-            if SETTINGS_FILE.exists():
-                with SETTINGS_FILE.open("r", encoding="utf-8") as file:
-                    settings = json.load(file)
-
-            google_path = self.google_credentials_entry.get().strip()
-            if google_path and for_source in (None, "google"):
-                credentials_path = Path(google_path).expanduser().resolve()
-                if not credentials_path.is_file():
-                    raise FileNotFoundError(f"Nie znaleziono pliku: {credentials_path}")
-                with credentials_path.open("r", encoding="utf-8") as file:
-                    google_credentials = json.load(file)
-                _validate_google_credentials(google_credentials)
-                settings["google_credentials_path"] = str(credentials_path)
-                googleAPI.CREDENTIALS_FILE = str(credentials_path)
-
-            microsoft_id = self.microsoft_client_id_entry.get().strip()
-            environment_id = os.environ.get("MICROSOFT_CLIENT_ID", "").strip()
-            if for_source in (None, "microsoft") and microsoft_id and environment_id and microsoft_id != environment_id:
-                raise ValueError("Zmienna MICROSOFT_CLIENT_ID ma pierwszeństwo. Zmień ją albo wklej tę samą wartość.")
-            if microsoft_id and for_source in (None, "microsoft"):
-                microsoft_path = Path(MicrosoftAPI.CREDENTIALS_FILE)
-                with microsoft_path.open("w", encoding="utf-8") as file:
-                    json.dump({"client_id": microsoft_id, "tenant_id": "common"}, file, indent=4)
-
-            with SETTINGS_FILE.open("w", encoding="utf-8") as file:
-                json.dump(settings, file, ensure_ascii=False, indent=4)
-            if show_success:
-                self.status_label.configure(text="Ustawienia API zapisane.", text_color="green")
+            path = Path(clickUpAPI.UNIFIED_CREDENTIALS_FILE)
+            credentials = {}
+            if path.exists():
+                with path.open("r", encoding="utf-8") as f:
+                    credentials = json.load(f)
+            credentials.setdefault("clickup", {})["api_token"] = self.clickup_token.get().strip()
+            credentials.setdefault("microsoft", {})["client_id"] = self.microsoft_client_id.get().strip()
+            with path.open("w", encoding="utf-8") as f:
+                json.dump(credentials, f, ensure_ascii=False, indent=2)
+            self.status_label.configure(text="Service connections saved.", text_color="green")
             return True
-        except (OSError, json.JSONDecodeError, ValueError) as error:
-            self.status_label.configure(text=f"Błąd ustawień API: {error}", text_color="red")
+        except (OSError, json.JSONDecodeError, TypeError) as error:
+            self.status_label.configure(text=f"Could not save connections: {error}", text_color="red")
             return False
 
     def _start_import(self, source):
-        if not self._save_api_settings(show_success=False, for_source=source):
+        if not self._save_credentials():
             return
-        self.status_label.configure(text="Autoryzacja i pobieranie danych w tle...", text_color="yellow")
-        self.google_btn.configure(state="disabled")
+        self.clickup_btn.configure(state="disabled")
         self.ms_btn.configure(state="disabled")
+        self.status_label.configure(text="Authorizing and importing in the background?", text_color="yellow")
         threading.Thread(target=self._worker, args=(source,), daemon=True).start()
 
     def _worker(self, source):
         try:
-            if source == "google":
-                tasks = googleAPI.download_tasks(as_objects=True)
-            elif source == "microsoft":
-                tasks = MicrosoftAPI.download_tasks(as_objects=True)
+            if source == "clickup":
+                tasks = clickUpAPI.download_tasks(as_objects=True)
             else:
-                raise ValueError(f"Unknown import source: {source}")
+                raise NotImplementedError("Microsoft To Do task import is not implemented yet.")
             self.after(0, self._process_and_save, tasks)
         except Exception as error:
             self.after(0, self._show_error, str(error))
 
     def _process_and_save(self, downloaded_tasks):
         try:
-            added_tasks, tag_count, duplicate_count = merge_downloaded_tasks(downloaded_tasks)
-            task_count = len(added_tasks)
-            task_titles = [
-                str(getattr(task, "description", "")).splitlines()[0].strip() or f"Zadanie {task.id}"
-                for task in added_tasks
-            ]
-            print("Zaimportowane zadania:")
-            if task_titles:
-                for task, title in zip(added_tasks, task_titles):
-                    print(f"  [{task.id}] {title}")
-            else:
-                print("  Brak nowych zadań.")
-
+            added, tag_count, duplicates = merge_downloaded_tasks(downloaded_tasks)
+            titles = [str(getattr(task, "description", "")).splitlines()[0].strip() or f"Task {task.id}" for task in added]
             self.imported_tasks_box.configure(state="normal")
             self.imported_tasks_box.delete("1.0", "end")
-            self.imported_tasks_box.insert(
-                "1.0",
-                "\n".join(f"[{task.id}] {title}" for task, title in zip(added_tasks, task_titles))
-                or "Brak nowych zadań.",
-            )
+            self.imported_tasks_box.insert("1.0", "\n".join(f"[{task.id}] {title}" for task, title in zip(added, titles)) or "No new tasks.")
             self.imported_tasks_box.configure(state="disabled")
-
-            message = f"Gotowe! Zaimportowano {task_count} zadań i {tag_count} nowych tagów."
-            if duplicate_count:
-                message += f" Pominięto {duplicate_count} już zaimportowanych."
-            self.status_label.configure(text=message, text_color="green")
+            self.status_label.configure(text=f"Imported {len(added)} tasks and {tag_count} tags; skipped {duplicates} duplicates.", text_color="green")
             if self.on_data_changed:
                 self.on_data_changed()
         except Exception as error:
             self._show_error(str(error))
             return
-        self.google_btn.configure(state="normal")
-        self.ms_btn.configure(state="normal")
+        self._set_buttons_enabled(True)
 
-    def _show_error(self, error_msg):
-        self.status_label.configure(text=f"Błąd: {error_msg}", text_color="red")
-        self.google_btn.configure(state="normal")
-        self.ms_btn.configure(state="normal")
+    def _set_buttons_enabled(self, enabled):
+        state = "normal" if enabled else "disabled"
+        self.clickup_btn.configure(state=state)
+        self.ms_btn.configure(state=state)
+
+    def _show_error(self, message):
+        self.status_label.configure(text=f"Integration error: {message}", text_color="red")
+        self._set_buttons_enabled(True)

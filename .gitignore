@@ -1,6 +1,5 @@
 credentials.json
 token.json
-microsoft_credentials.json
 ms_token*.json
 clickup_credentials.json
 clickup_token*.json

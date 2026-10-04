@@ -10,8 +10,20 @@ import datas
 
 
 class TaskFrame(ctk.CTkFrame):
+    """
+    Formularz tworzenia/edycji zadania oparty na wytycznych 'EDIT TASKA.svg'
+    z podpowiedziami artysty (how much focus..., when do you start..., how long..., what category..., how urgent...)
+    oraz kolorystyką FUTUREFLOW (#E169FF / neon accents).
+    """
+
+    ACCENT_PURPLE = "#E169FF"
+    DEEP_PURPLE = "#571FA0"
+    VIVID_MAGENTA = "#D83CFF"
+    CARD_BG = ("#f4f0f8", "#1e1828")
+    BORDER_COLOR = ("#d5cae6", "#3d3250")
+
     def __init__(self, master, on_task_added: Optional[Callable[[Task], None]] = None, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, fg_color="transparent", **kwargs)
 
         self.on_task_added = on_task_added
         self.available_tags = datas.tags_list
@@ -20,39 +32,79 @@ class TaskFrame(ctk.CTkFrame):
         self.tag_buttons = {}
 
         # --- Nagłówek ---
-        self.title_label = ctk.CTkLabel(self, text="Utwórz nowe zadanie", font=ctk.CTkFont(size=20, weight="bold"))
-        self.title_label.pack(pady=(10, 15))
+        header_box = ctk.CTkFrame(self, fg_color="transparent")
+        header_box.pack(pady=(6, 10), fill="x", padx=15)
 
-        # --- Przycisk Autofill ---
-        self.autofill_btn = ctk.CTkButton(self, text="Uzupełnij formularz przez AI", command=self._start_autofill)
-        self.autofill_btn.pack(pady=(0, 15), fill="x", padx=20)
+        self.title_label = ctk.CTkLabel(
+            header_box,
+            text="✨ FUTUREFLOW — UTWÓRZ / EDYTUJ ZADANIE",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=self.ACCENT_PURPLE,
+        )
+        self.title_label.pack(side="left")
+
+        # --- Przycisk Autofill AI ---
+        self.autofill_btn = ctk.CTkButton(
+            self,
+            text="⚡ Uzupełnij parametry przez AI (Autofill)",
+            fg_color=self.DEEP_PURPLE,
+            hover_color="#6e28c7",
+            font=ctk.CTkFont(weight="bold"),
+            command=self._start_autofill,
+        )
+        self.autofill_btn.pack(pady=(0, 10), fill="x", padx=15)
 
         # --- Status / Informacja zwrotna ---
         self.status_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=12))
-        self.status_label.pack(pady=(0, 5))
+        self.status_label.pack(pady=(0, 4))
 
-        # --- Pola formularza ---
+        # Scrollable container for form fields
+        form_scroll = ctk.CTkScrollableFrame(
+            self,
+            fg_color=self.CARD_BG,
+            corner_radius=12,
+            border_width=1,
+            border_color=self.BORDER_COLOR,
+        )
+        form_scroll.pack(fill="both", expand=True, padx=15, pady=(0, 10))
 
         # 1. Description
-        self.desc_label = ctk.CTkLabel(self, text="Opis zadania (Description):")
-        self.desc_label.pack(anchor="w", padx=20)
-        self.desc_entry = ctk.CTkTextbox(self, height=60)
-        self.desc_entry.pack(fill="x", padx=20, pady=(0, 10))
+        desc_hdr = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        desc_hdr.pack(fill="x", padx=15, pady=(10, 2))
+        ctk.CTkLabel(desc_hdr, text="Opis zadania (Description):", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
 
-        # 2. Deadline (Data i czas w jednej linii)
-        self.deadline_label = ctk.CTkLabel(self, text="Termin (Deadline):")
-        self.deadline_label.pack(anchor="w", padx=20)
+        self.desc_entry = ctk.CTkTextbox(form_scroll, height=55)
+        self.desc_entry.pack(fill="x", padx=15, pady=(0, 10))
 
-        self.deadline_card = ctk.CTkFrame(self, fg_color=("gray85", "gray20"), corner_radius=10)
-        self.deadline_card.pack(fill="x", padx=20, pady=(0, 10), ipady=3, ipadx=5)
+        # 2. Focus (how much focus does this task require?)
+        focus_hdr = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        focus_hdr.pack(fill="x", padx=15, pady=(4, 2))
+        ctk.CTkLabel(focus_hdr, text="Wymagane skupienie (Focus):", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkLabel(focus_hdr, text="  (how much focus does this task require?)", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray").pack(side="left")
+
+        self.focus_frame = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        self.focus_frame.pack(fill="x", padx=15, pady=(0, 10))
+
+        self.focus_slider = ctk.CTkSlider(self.focus_frame, from_=0, to=10, number_of_steps=10, progress_color=self.ACCENT_PURPLE)
+        self.focus_slider.set(5)
+        self.focus_slider.pack(side="left", expand=True, fill="x", padx=(0, 10))
+
+        self.focus_auto_cb = ctk.CTkCheckBox(self.focus_frame, text="Auto (oszacuj)", command=self._toggle_focus_slider)
+        self.focus_auto_cb.pack(side="right")
+
+        # 3. Deadline (when do you start the task? when is your deadline?)
+        dl_hdr = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        dl_hdr.pack(fill="x", padx=15, pady=(4, 2))
+        ctk.CTkLabel(dl_hdr, text="Termin ostateczny (Deadline):", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkLabel(dl_hdr, text="  (when do you start the task? when is your deadline?)", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray").pack(side="left")
+
+        self.deadline_card = ctk.CTkFrame(form_scroll, fg_color=("gray85", "#241d30"), corner_radius=10, border_width=1, border_color=self.BORDER_COLOR)
+        self.deadline_card.pack(fill="x", padx=15, pady=(0, 10), ipady=3, ipadx=5)
 
         now = datetime.now()
-
-        # Pojedyncza linia łącząca wybór daty i czasu
         datetime_row = ctk.CTkFrame(self.deadline_card, fg_color="transparent")
-        datetime_row.pack(fill="x", pady=5, padx=5)
+        datetime_row.pack(fill="x", pady=4, padx=5)
 
-        # Data
         ctk.CTkLabel(datetime_row, text="📅", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=(5, 2))
 
         days = [f"{i:02d}" for i in range(1, 32)]
@@ -70,7 +122,6 @@ class TaskFrame(ctk.CTkFrame):
         self.year_opt.set(str(now.year))
         self.year_opt.pack(side="left", padx=2)
 
-        # Czas
         ctk.CTkLabel(datetime_row, text="⏰", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=(15, 2))
 
         hours = [f"{i:02d}" for i in range(24)]
@@ -85,46 +136,46 @@ class TaskFrame(ctk.CTkFrame):
         self.deadline_minute.set("00")
         self.deadline_minute.pack(side="left", padx=2)
 
-        # 3. Time (Wymagany czas)
-        self.time_label = ctk.CTkLabel(self, text="Wymagany czas (Time) np. 02:30 (zostaw puste dla auto):")
-        self.time_label.pack(anchor="w", padx=20)
-        self.time_entry = ctk.CTkEntry(self, placeholder_text="")
-        self.time_entry.pack(fill="x", padx=20, pady=(0, 10))
+        # 4. Time / Duration (how long is this task going to take?)
+        time_hdr = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        time_hdr.pack(fill="x", padx=15, pady=(4, 2))
+        ctk.CTkLabel(time_hdr, text="Wymagany czas trwania (Duration):", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkLabel(time_hdr, text="  (how long is this task going to take?)", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray").pack(side="left")
 
-        # 4. Focus (Slider + Checkbox)
-        self.focus_label = ctk.CTkLabel(self, text="Skupienie (Focus):")
-        self.focus_label.pack(anchor="w", padx=20)
+        self.time_entry = ctk.CTkEntry(form_scroll, placeholder_text="np. 01:30 lub 12:12 (zostaw puste dla auto)")
+        self.time_entry.pack(fill="x", padx=15, pady=(0, 10))
 
-        self.focus_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.focus_frame.pack(fill="x", padx=20, pady=(0, 10))
+        # 5. Category / Tags (what category is this task?)
+        tag_hdr = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        tag_hdr.pack(fill="x", padx=15, pady=(4, 2))
+        ctk.CTkLabel(tag_hdr, text="Kategoria / Tagi (Tags):", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkLabel(tag_hdr, text="  (what category is this task?) Tags...", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray").pack(side="left")
 
-        self.focus_slider = ctk.CTkSlider(self.focus_frame, from_=0, to=10, number_of_steps=10)
-        self.focus_slider.set(5)
-        self.focus_slider.pack(side="left", expand=True, fill="x", padx=(0, 10))
-
-        self.focus_auto_cb = ctk.CTkCheckBox(self.focus_frame, text="Auto (puste)", command=self._toggle_focus_slider)
-        self.focus_auto_cb.pack(side="right")
-
-        # 5. Priority (1 - 4)
-        self.priority_label = ctk.CTkLabel(self, text="Priorytet (Priority: 1 - 4):")
-        self.priority_label.pack(anchor="w", padx=20)
-        self.priority_slider = ctk.CTkSlider(self, from_=1, to=4, number_of_steps=3)
-        self.priority_slider.set(1)
-        self.priority_slider.pack(fill="x", padx=20, pady=(0, 15))
-
-        # --- Tagi w formie przycisków ---
-        self.tags_label = ctk.CTkLabel(self, text="Wybierz Tagi:")
-        self.tags_label.pack(anchor="w", padx=20)
-
-        self.tags_frame = ctk.CTkScrollableFrame(self, height=80, orientation="horizontal")
-        self.tags_frame.pack(fill="x", padx=20, pady=(0, 20))
-
+        self.tags_frame = ctk.CTkScrollableFrame(form_scroll, height=65, orientation="horizontal", fg_color=("gray90", "#241d30"))
+        self.tags_frame.pack(fill="x", padx=15, pady=(0, 10))
         self._create_tag_buttons()
 
+        # 6. Priority / Urgency (how urgent is this task?)
+        prio_hdr = ctk.CTkFrame(form_scroll, fg_color="transparent")
+        prio_hdr.pack(fill="x", padx=15, pady=(4, 2))
+        ctk.CTkLabel(prio_hdr, text="Priorytet pilności (Priority: 1 - 4):", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkLabel(prio_hdr, text="  (how urgent is this task? Low / Med / High / Critical)", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray").pack(side="left")
+
+        self.priority_slider = ctk.CTkSlider(form_scroll, from_=1, to=4, number_of_steps=3, progress_color=self.ACCENT_PURPLE)
+        self.priority_slider.set(1)
+        self.priority_slider.pack(fill="x", padx=15, pady=(0, 14))
+
         # --- Przycisk Dodawania Zadania ---
-        self.add_task_btn = ctk.CTkButton(self, text="Dodaj zadanie (Add Task)", fg_color="green",
-                                          hover_color="darkgreen", command=self._submit_task)
-        self.add_task_btn.pack(pady=(10, 20), fill="x", padx=20)
+        self.add_task_btn = ctk.CTkButton(
+            self,
+            text="💾 Dodaj zadanie (Add Task)",
+            fg_color=self.ACCENT_PURPLE,
+            hover_color=self.VIVID_MAGENTA,
+            text_color="black",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=self._submit_task,
+        )
+        self.add_task_btn.pack(pady=(6, 12), fill="x", padx=15)
 
     def _toggle_focus_slider(self):
         if self.focus_auto_cb.get() == 1:
@@ -132,21 +183,31 @@ class TaskFrame(ctk.CTkFrame):
         else:
             self.focus_slider.configure(state="normal")
 
+    def refresh_tags(self):
+        """Odświeża listę tagów dostępnych w formularzu."""
+        for child in self.tags_frame.winfo_children():
+            child.destroy()
+        self.tag_buttons.clear()
+        self._create_tag_buttons()
+
     def _create_tag_buttons(self):
         self.available_tags = datas.tags_list
         for tag in self.available_tags:
+            is_selected = tag in self.selected_tags
+            active_color = self._rgb_to_hex(tag.color) if hasattr(tag, "color") and tag.color else "#1f6aa5"
             btn = ctk.CTkButton(
                 self.tags_frame,
                 text=tag.title,
-                fg_color="gray",
-                text_color="white",
-                command=lambda t=tag: self._toggle_tag(t)
+                fg_color=active_color if is_selected else ("gray75", "#382e4a"),
+                text_color="white" if is_selected else ("black", "white"),
+                corner_radius=8,
+                command=lambda t=tag: self._toggle_tag(t),
             )
-            btn.pack(side="left", padx=5, pady=5)
+            btn.pack(side="left", padx=4, pady=4)
             self.tag_buttons[tag] = btn
 
     def _rgb_to_hex(self, rgb_tuple):
-        return f'#{rgb_tuple[0]:02x}{rgb_tuple[1]:02x}{rgb_tuple[2]:02x}'
+        return f"#{rgb_tuple[0]:02x}{rgb_tuple[1]:02x}{rgb_tuple[2]:02x}"
 
     def _toggle_tag(self, tag: Tag):
         button = self.tag_buttons.get(tag)
@@ -154,32 +215,31 @@ class TaskFrame(ctk.CTkFrame):
             return
         if tag in self.selected_tags:
             self.selected_tags.remove(tag)
-            button.configure(fg_color="gray")
+            button.configure(fg_color=("gray75", "#382e4a"), text_color=("black", "white"))
         else:
             self.selected_tags.append(tag)
-            active_color = self._rgb_to_hex(tag.color) if hasattr(tag, 'color') and tag.color else "#1f6aa5"
-            button.configure(fg_color=active_color)
+            active_color = self._rgb_to_hex(tag.color) if hasattr(tag, "color") and tag.color else "#1f6aa5"
+            button.configure(fg_color=active_color, text_color="white")
 
     def _start_autofill(self):
         description = self.desc_entry.get("0.0", "end").strip()
         if not description:
             self.status_label.configure(
-                text="Podaj opis zadania przed uzyciem AI!",
-                text_color="orange"
+                text="Podaj opis zadania przed użyciem AI!",
+                text_color="orange",
             )
             return
 
         self.status_label.configure(text="AI analizuje zadanie...", text_color="white")
         self.autofill_btn.configure(
             state="disabled",
-            text="Przetwarzanie (Oczekiwanie na odpowiedz)..."
+            text="Przetwarzanie (Oczekiwanie na odpowiedź)...",
         )
 
         time_val = self.time_entry.get().strip()
         autofill_time = not bool(time_val)
         autofill_focus = (self.focus_auto_cb.get() == 1)
 
-        # If neither is explicitly indicated as empty, user clicked AI to estimate both
         if not autofill_time and not autofill_focus:
             autofill_time = True
             autofill_focus = True
@@ -230,7 +290,7 @@ class TaskFrame(ctk.CTkFrame):
         self.after(100, check_result)
 
     def _apply_autofill_data(self, data):
-        self.autofill_btn.configure(state="normal", text="Uzupełnij formularz przez AI")
+        self.autofill_btn.configure(state="normal", text="⚡ Uzupełnij parametry przez AI (Autofill)")
         if not data:
             self.status_label.configure(text="Brak danych z AI", text_color="orange")
             return
@@ -258,7 +318,7 @@ class TaskFrame(ctk.CTkFrame):
                         if avail_tag.title == tag_title and avail_tag not in self.selected_tags:
                             self._toggle_tag(avail_tag)
 
-            self.status_label.configure(text="Pola uzupelnione przez AI!", text_color="#4caf50")
+            self.status_label.configure(text="Pola uzupełnione przez AI!", text_color="#4caf50")
             self.after(4000, lambda: self.status_label.configure(text=""))
             return
 
@@ -289,19 +349,18 @@ class TaskFrame(ctk.CTkFrame):
                         if avail_tag.title == tag_title and avail_tag not in self.selected_tags:
                             self._toggle_tag(avail_tag)
 
-            self.status_label.configure(text="Pola uzupelnione przez AI!", text_color="#4caf50")
+            self.status_label.configure(text="Pola uzupełnione przez AI!", text_color="#4caf50")
             self.after(4000, lambda: self.status_label.configure(text=""))
 
     def _apply_autofill_error(self, err_msg: str):
-        self.autofill_btn.configure(state="normal", text="Uzupełnij formularz przez AI")
-        self.status_label.configure(text=f"Blad AI: {err_msg}", text_color="red")
+        self.autofill_btn.configure(state="normal", text="⚡ Uzupełnij parametry przez AI (Autofill)")
+        self.status_label.configure(text=f"Błąd AI: {err_msg}", text_color="red")
         self.after(6000, lambda: self.status_label.configure(text=""))
 
     def _submit_task(self):
         new_task = Task()
         autofill_focus, autofill_time = False, False
 
-        # Sprawdzanie Time
         time_input = self.time_entry.get().strip()
         if not time_input:
             autofill_time = True
@@ -309,7 +368,6 @@ class TaskFrame(ctk.CTkFrame):
         else:
             new_task.time = time_input
 
-        # Sprawdzanie Focus
         if self.focus_auto_cb.get() == 1:
             autofill_focus = True
             new_task.focus = 0
@@ -319,7 +377,6 @@ class TaskFrame(ctk.CTkFrame):
         new_task.description = self.desc_entry.get("0.0", "end").strip()
         new_task.priority = int(self.priority_slider.get())
 
-        # Pobieranie daty i czasu z menu rozwijanych
         day = self.day_opt.get()
         month = self.month_opt.get()
         year = self.year_opt.get()
@@ -329,14 +386,12 @@ class TaskFrame(ctk.CTkFrame):
         new_task.deadline = f"{year}-{month}-{day}T{hour}:{minute}:00"
         new_task.tags = list(self.selected_tags)
 
-        # Generowanie unikalnego ID
         existing_ids = [t.id for t in datas.current_tasks_list if hasattr(t, "id") and isinstance(t.id, int)]
         new_task.id = (max(existing_ids) + 1) if existing_ids else 1
 
-        # Wywołanie funkcji z datas.py
         datas.add_task(new_task, autofill_focus, autofill_time)
 
-        self.status_label.configure(text="Zadanie zostalo pomyslnie dodane!", text_color="#4caf50")
+        self.status_label.configure(text="Zadanie zostało pomyślnie dodane!", text_color="#4caf50")
         self.after(3500, lambda: self.status_label.configure(text=""))
 
         if self.on_task_added:
@@ -353,7 +408,6 @@ class TaskFrame(ctk.CTkFrame):
         self.focus_auto_cb.deselect()
         self._toggle_focus_slider()
 
-        # Reset daty i czasu do aktualnego
         self.day_opt.set(f"{now.day:02d}")
         self.month_opt.set(f"{now.month:02d}")
         self.year_opt.set(str(now.year))

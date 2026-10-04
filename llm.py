@@ -3,11 +3,12 @@ from pydantic import BaseModel, Field
 from openai import OpenAI
 
 from task import Task
-
+Api1 ="sk-proj-wEVi0DqAQm5eoyL8Atk4mn0SStj_0CIBn7K6QClS6cnQk3uxEXLJlFMCrEaAChHyTe"
+Api2="VevLRuvpT3BlbkFJEM3Usd5b11lPLctQwnaPecXbFfNKMCV1yOm5X04XoPmGVjTrJ9IBchnu4zohmDTnvGvdOFcdYA"
 
 # Twój klucz API
 client = OpenAI(
-    api_key="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"
+    api_key=Api1+Api2
 )
 
 

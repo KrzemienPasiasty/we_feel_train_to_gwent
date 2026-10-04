@@ -429,16 +429,27 @@ def time_to_slot(t: time) -> int:
 
 
 def parse_deadline_datetime(val: Any) -> Optional[datetime]:
+    """Parse a deadline into the local, timezone-naive clock used by schedules.
+
+    Integrations commonly provide UTC-aware timestamps, while calendar slots are
+    represented as local naive datetimes. Convert aware deadlines to local time
+    before dropping the timezone so comparisons use a consistent clock.
+    """
+    def local_naive(value: datetime) -> datetime:
+        if value.tzinfo is not None and value.utcoffset() is not None:
+            return value.astimezone().replace(tzinfo=None)
+        return value
+
     if val is None:
         return None
     if isinstance(val, datetime):
-        return val
+        return local_naive(val)
     if isinstance(val, str):
         s = val.strip()
         if not s:
             return None
         try:
-            return datetime.fromisoformat(s.replace("Z", "+00:00"))
+            return local_naive(datetime.fromisoformat(s.replace("Z", "+00:00")))
         except Exception:
             for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
                 try:

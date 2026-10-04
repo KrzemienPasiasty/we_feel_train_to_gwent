@@ -3,20 +3,100 @@
         "id": 1,
         "title": "DeepFocus",
         "color": [
-            0,
-            120,
-            212
+            225,
+            105,
+            255
         ],
         "is_interactive": true
     },
     {
         "id": 2,
-        "title": "PRACA",
+        "title": "ArtistDesignTag",
         "color": [
-            202,
-            80,
-            16
+            225,
+            105,
+            255
         ],
         "is_interactive": true
+    },
+    {
+        "id": 3,
+        "title": "List",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 4,
+        "title": "gdzie wysłać CV",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 5,
+        "title": "kursy",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 6,
+        "title": "Lem",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 7,
+        "title": "inne",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 8,
+        "title": "czas żniw",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 9,
+        "title": "Personal List",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
+    },
+    {
+        "id": 10,
+        "title": "zakon drzewa pomarańczy",
+        "color": [
+            123,
+            104,
+            238
+        ],
+        "is_interactive": false
     }
 ]
