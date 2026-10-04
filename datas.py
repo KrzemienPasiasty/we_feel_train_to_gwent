@@ -1,3 +1,4 @@
+import os
 import json
 from datetime import date, datetime, time as time_value
 
@@ -14,6 +15,8 @@ past_weekly_schedule_list: list[WeeklySchedule] = []
 
 
 def _save_list_to_json(data_list: list, file_path: str, serializer) -> None:
+    if isinstance(data_list, (str, os.PathLike)) and isinstance(file_path, list):
+        data_list, file_path = file_path, str(data_list)
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(
             [serializer(item) for item in data_list],
@@ -24,6 +27,8 @@ def _save_list_to_json(data_list: list, file_path: str, serializer) -> None:
 
 
 def _load_list_from_json(target_list: list, file_path: str, deserializer) -> list:
+    if isinstance(target_list, (str, os.PathLike)) and isinstance(file_path, list):
+        target_list, file_path = file_path, str(target_list)
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             loaded_data = json.load(file)

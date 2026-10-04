@@ -6,14 +6,6 @@ from models import Task, Tag, WeekTime
 import datas
 
 
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     # DATA_FILES = {
     #     "tasks_active.json": datas.current_tasks_list,
@@ -30,12 +22,7 @@ if __name__ == "__main__":
     # print(datas.tags_list)
     # print(datas.weekly_schedule_list)
 
-    datas.load_tags_list_from_json("tags.json", datas.tags_list)
-
-
-
-
-
+    datas.load_tags_list_from_json(datas.tags_list, "tags.json")
 
     ctk.set_appearance_mode("Dark")
     ctk.set_default_color_theme("blue")
@@ -97,11 +84,8 @@ if __name__ == "__main__":
         print(f"Priorytet: {task_data.get('priority')}")
         print(f"Dane pełne: {task_data}")
 
-
     # calendar = CalendarFrame(calendar_frame, )
     # calendar.pack(fill="both", expand=True, padx=10, pady=10)
-
-
 
     ########################################################################    PREFERENCES
     preferences_frame = ctk.CTkFrame(tabview.tab("Preferences"))
