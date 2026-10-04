@@ -11,6 +11,4 @@ class Tag:
         self.is_interactive: bool
         """ is task with this tag can be moved by app in time"""
 
-        self.archived: bool
-
 
