@@ -1,10 +1,15 @@
 [
     {
-        "title": "zrobić przelew",
-        "description": "do skarbówki",
-        "time": null,
-        "priority": null,
-        "tags": null,
-        "llm_metadata": null
+        "id": 999,
+        "title": "Zaplanować urlop",
+        "description": "Kupić bilety do Włoch i wynająć hotel",
+        "tags": [
+            {
+                "name": "Zarządzanie Finansami"
+            },
+            {
+                "name": "Regeneracja"
+            }
+        ]
     }
 ]
