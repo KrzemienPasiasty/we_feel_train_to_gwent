@@ -155,6 +155,9 @@ class OptimizationConfig:
     tournament_size: int = 3                  # Size for tournament selection
     random_seed: Optional[int] = None         # Random seed for reproducibility
     reference_date: Optional[datetime] = None # Monday date corresponding to day 0 of the weekly schedule
+    min_schedule_datetime: Optional[datetime] = None # Cutoff datetime; slots before this time are rejected as past
+    earliest_task_time: time = time(6, 0)     # Earliest daytime hour to schedule tasks
+    latest_task_time: time = time(23, 0)      # Latest daytime hour to schedule tasks
     unassigned_task_penalty: float = 50.0     # Base penalty per unassigned task
     priority_multipliers: Optional[Dict[Any, float]] = None  # Multiplier per task priority
     penalize_tag_mismatch: bool = True        # Exponential penalty for scheduling tasks into slots with alien tags
@@ -712,7 +715,15 @@ def populate_meals_for_schedule(
 
     default_names = ["Breakfast", "Lunch", "Dinner", "Snack", "Supper"]
 
+    ref_dt = getattr(config, "reference_date", None)
+    min_dt = getattr(config, "min_schedule_datetime", None)
+
     for day in active_days:
+        if ref_dt and min_dt:
+            day_latest_dt = ref_dt + timedelta(days=day, hours=latest_t.hour, minutes=latest_t.minute)
+            if day_latest_dt < min_dt:
+                continue
+
         existing_on_day = schedule.get_meals_for_day(day)
         if len(existing_on_day) >= meals_needed:
             continue
@@ -733,6 +744,10 @@ def populate_meals_for_schedule(
             for offset in range(SLOTS_PER_DAY):
                 for s_cand in [nominal_s + offset, nominal_s - offset]:
                     if earliest_s <= s_cand <= latest_s - duration_s:
+                        if ref_dt and min_dt:
+                            meal_start_dt = ref_dt + timedelta(days=day, minutes=s_cand * SLOT_MINUTES)
+                            if meal_start_dt < min_dt:
+                                continue
                         if schedule.is_window_free(day, s_cand, s_cand + duration_s):
                             best_s = s_cand
                             break
@@ -844,6 +859,8 @@ def decode_permutation_to_schedule(
             sessions_per_week=getattr(config, "activities_per_week", 3),
             schedule=schedule,
             config=getattr(config, "physical_activity_config", None),
+            reference_date=getattr(config, "reference_date", None),
+            min_schedule_datetime=getattr(config, "min_schedule_datetime", None),
             weather_weight=getattr(config, "activity_weather_weight", 1.0),
             air_quality_weight=getattr(config, "activity_air_quality_weight", 1.0)
         )
@@ -901,11 +918,39 @@ def decode_permutation_to_schedule(
         focus_norm = min(1.0, max(0.0, focus_val / 10.0 if focus_val <= 10 else focus_val / 100.0))
         task_tag_ids = tag_identifiers(task.tags)
 
+        earliest_task_t = getattr(config, "earliest_task_time", time(6, 0))
+        latest_task_t = getattr(config, "latest_task_time", time(23, 0))
+        earliest_task_s = time_to_slot(earliest_task_t)
+        latest_task_s = time_to_slot(latest_task_t)
+        ref_dt = getattr(config, "reference_date", None)
+        min_dt = getattr(config, "min_schedule_datetime", None)
+
         # Scan all available days and slot windows
         for day in range(DAYS_IN_WEEK):
+            if ref_dt and min_dt:
+                day_end_dt = ref_dt + timedelta(days=day, hours=latest_task_t.hour, minutes=latest_task_t.minute)
+                if day_end_dt < min_dt:
+                    continue
+
             # Check slots within the day
             for s in range(0, SLOTS_PER_DAY - slots_needed + 1):
                 e = s + slots_needed
+
+                in_daytime = (earliest_task_s <= s and e <= latest_task_s)
+                if not in_daytime:
+                    if not task_tag_ids:
+                        continue
+                    has_matching_tagged_slot = any(
+                        bool(tag_identifiers(weekly_schedule._slots[day][slot_i]) & task_tag_ids)
+                        for slot_i in range(s, e)
+                    )
+                    if not has_matching_tagged_slot:
+                        continue
+
+                if ref_dt and min_dt:
+                    slot_start_dt = ref_dt + timedelta(days=day, minutes=s * SLOT_MINUTES)
+                    if slot_start_dt < min_dt:
+                        continue
 
                 # Check window availability (meals, activities, and other tasks are marked as occupied)
                 if not schedule.is_window_free(day, s, e):

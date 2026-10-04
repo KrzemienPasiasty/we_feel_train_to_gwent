@@ -20,6 +20,17 @@ if __name__ == "__main__":
         datas.load_weekly_schedule_list_from_json(datas.weekly_schedule_list, "week_time.json")
     except Exception:
         pass
+    if not datas.weekly_schedule_list:
+        datas.weekly_schedule_list.append(WeekTime())
+
+    try:
+        datas.load_scheduled_meals_from_json(datas.scheduled_meals_list, "meals.json")
+    except Exception:
+        pass
+    try:
+        datas.load_trainings_from_json(datas.trainings_list, "trainings.json")
+    except Exception:
+        pass
 
     ctk.set_appearance_mode("Dark")
     ctk.set_default_color_theme("blue")

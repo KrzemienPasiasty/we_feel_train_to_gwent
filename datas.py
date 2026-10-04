@@ -13,6 +13,8 @@ done_tasks_list: list[Task] = []
 tags_list: list[Tag] = []
 weekly_schedule_list: list[WeeklySchedule] = []
 past_weekly_schedule_list: list[WeeklySchedule] = []
+scheduled_meals_list: list = []
+trainings_list: list = []
 
 
 def _save_list_to_json(data_list: list, file_path: str, serializer) -> None:
@@ -271,6 +273,166 @@ def load_past_weekly_schedule_list_from_json(
     schedules: list[WeeklySchedule], file_path: str
 ) -> list[WeeklySchedule]:
     return _load_list_from_json(schedules, file_path, _weekly_schedule_from_dict)
+
+
+def _scheduled_meal_to_dict(meal) -> dict:
+    s_dt = getattr(meal, "start_datetime", getattr(meal, "datetime", None))
+    e_dt = getattr(meal, "end_datetime", None)
+    s_t = getattr(meal, "start_time", None)
+    e_t = getattr(meal, "end_time", None)
+    return {
+        "meal_index": getattr(meal, "meal_index", 0),
+        "name": getattr(meal, "name", "Meal"),
+        "day": getattr(meal, "day", 0),
+        "start_time": s_t.strftime("%H:%M:%S") if isinstance(s_t, time_value) else str(s_t or "12:00:00"),
+        "end_time": e_t.strftime("%H:%M:%S") if isinstance(e_t, time_value) else str(e_t or "12:30:00"),
+        "duration_minutes": getattr(meal, "duration_minutes", 30),
+        "color": getattr(meal, "color", "#FF9800"),
+        "start_datetime": _encode_task_value(s_dt),
+        "end_datetime": _encode_task_value(e_dt),
+    }
+
+
+def _scheduled_meal_from_dict(d: dict):
+    from optimizer.schedule_optimizer import ScheduledMeal, time_to_slot
+    start_t = _decode_task_value(d.get("start_time"))
+    if isinstance(start_t, str):
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                start_t = datetime.strptime(start_t, fmt).time()
+                break
+            except Exception:
+                pass
+    if not isinstance(start_t, time_value):
+        start_t = time_value(12, 0)
+
+    end_t = _decode_task_value(d.get("end_time"))
+    if isinstance(end_t, str):
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                end_t = datetime.strptime(end_t, fmt).time()
+                break
+            except Exception:
+                pass
+    if not isinstance(end_t, time_value):
+        end_t = time_value(12, 30)
+
+    start_s = time_to_slot(start_t)
+    end_s = time_to_slot(end_t)
+
+    meal = ScheduledMeal(
+        meal_index=int(d.get("meal_index", 0)),
+        name=str(d.get("name", "Meal")),
+        day=int(d.get("day", 0)),
+        start_slot=start_s,
+        end_slot=end_s,
+        start_time=start_t,
+        end_time=end_t,
+        duration_minutes=int(d.get("duration_minutes", 30)),
+        color=str(d.get("color", "#FF9800")),
+    )
+    s_dt = _decode_task_value(d.get("start_datetime"))
+    e_dt = _decode_task_value(d.get("end_datetime"))
+    meal.start_datetime = s_dt
+    meal.datetime = s_dt
+    meal.end_datetime = e_dt
+    return meal
+
+
+def _training_to_dict(act) -> dict:
+    s_dt = getattr(act, "start_datetime", getattr(act, "datetime", None))
+    e_dt = getattr(act, "end_datetime", None)
+    s_t = getattr(act, "start_time", None)
+    e_t = getattr(act, "end_time", None)
+    return {
+        "activity_index": getattr(act, "activity_index", 0),
+        "name": getattr(act, "name", "Training"),
+        "day": getattr(act, "day", 0),
+        "start_time": s_t.strftime("%H:%M:%S") if isinstance(s_t, time_value) else str(s_t or "08:00:00"),
+        "end_time": e_t.strftime("%H:%M:%S") if isinstance(e_t, time_value) else str(e_t or "09:00:00"),
+        "duration_minutes": getattr(act, "duration_minutes", 60),
+        "color": getattr(act, "color", "#4CAF50"),
+        "outdoor": bool(getattr(act, "outdoor", True)),
+        "weather_penalty": float(getattr(act, "weather_penalty", 0.0)),
+        "air_quality_penalty": float(getattr(act, "air_quality_penalty", 0.0)),
+        "weather_description": str(getattr(act, "weather_description", "Unknown")),
+        "air_quality_description": str(getattr(act, "air_quality_description", "Unknown")),
+        "start_datetime": _encode_task_value(s_dt),
+        "end_datetime": _encode_task_value(e_dt),
+    }
+
+
+def _training_from_dict(d: dict):
+    from optimizer.physical_activity import ScheduledActivity, time_to_slot
+    start_t = _decode_task_value(d.get("start_time"))
+    if isinstance(start_t, str):
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                start_t = datetime.strptime(start_t, fmt).time()
+                break
+            except Exception:
+                pass
+    if not isinstance(start_t, time_value):
+        start_t = time_value(8, 0)
+
+    end_t = _decode_task_value(d.get("end_time"))
+    if isinstance(end_t, str):
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                end_t = datetime.strptime(end_t, fmt).time()
+                break
+            except Exception:
+                pass
+    if not isinstance(end_t, time_value):
+        end_t = time_value(9, 0)
+
+    start_s = time_to_slot(start_t)
+    end_s = time_to_slot(end_t)
+
+    act = ScheduledActivity(
+        activity_index=int(d.get("activity_index", 0)),
+        name=str(d.get("name", "Training")),
+        day=int(d.get("day", 0)),
+        start_slot=start_s,
+        end_slot=end_s,
+        start_time=start_t,
+        end_time=end_t,
+        duration_minutes=int(d.get("duration_minutes", 60)),
+        color=str(d.get("color", "#4CAF50")),
+        outdoor=bool(d.get("outdoor", True)),
+        weather_penalty=float(d.get("weather_penalty", 0.0)),
+        air_quality_penalty=float(d.get("air_quality_penalty", 0.0)),
+        weather_description=str(d.get("weather_description", "Unknown")),
+        air_quality_description=str(d.get("air_quality_description", "Unknown")),
+    )
+    s_dt = _decode_task_value(d.get("start_datetime"))
+    e_dt = _decode_task_value(d.get("end_datetime"))
+    act.start_datetime = s_dt
+    act.datetime = s_dt
+    act.end_datetime = e_dt
+    return act
+
+
+def save_scheduled_meals_to_json(meals: list, file_path: str = "meals.json") -> None:
+    _save_list_to_json(meals, file_path, _scheduled_meal_to_dict)
+
+
+def load_scheduled_meals_from_json(target_list: list, file_path: str = "meals.json") -> list:
+    return _load_list_from_json(target_list, file_path, _scheduled_meal_from_dict)
+
+
+def save_trainings_to_json(trainings: list, file_path: str = "trainings.json") -> None:
+    _save_list_to_json(trainings, file_path, _training_to_dict)
+
+
+def load_trainings_from_json(target_list: list, file_path: str = "trainings.json") -> list:
+    return _load_list_from_json(target_list, file_path, _training_from_dict)
+
+
+save_meals_to_json = save_scheduled_meals_to_json
+load_meals_from_json = load_scheduled_meals_from_json
+save_scheduled_trainings_to_json = save_trainings_to_json
+load_scheduled_trainings_from_json = load_trainings_from_json
 
 
 def add_task(task: Task, autofill_focus=False, autofill_time=False):

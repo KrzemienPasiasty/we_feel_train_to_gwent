@@ -171,6 +171,374 @@ class ScheduledActivityWidget(ctk.CTkFrame):
         self.label.pack(fill="both", expand=True, padx=4, pady=1)
 
 
+class AddTagToTimeDialog(ctk.CTkToplevel):
+    """Okno dialogowe do przypisywania tagów do przedziałów czasu w WeeklySchedule."""
+
+    PRESET_COLORS = [
+        ("#0078d4", (0, 120, 212)),    # Niebieski
+        ("#107c10", (16, 124, 16)),    # Zielony
+        ("#c42b1c", (196, 43, 28)),    # Czerwony
+        ("#ca5010", (202, 80, 16)),    # Pomarańczowy
+        ("#7e49bc", (126, 73, 188)),   # Fioletowy
+        ("#0099bc", (0, 153, 188)),    # Turkusowy
+        ("#c4529d", (196, 82, 157)),   # Różowy
+        ("#78716c", (120, 113, 108)),  # Szary
+    ]
+    DAY_LABELS = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"]
+    HOURS = [f"{h:02d}" for h in range(24)]
+    END_HOURS = [f"{h:02d}" for h in range(25)]
+    MINUTES = ["00", "15", "30", "45"]
+
+    def __init__(
+        self,
+        master,
+        default_day: Optional[int] = None,
+        default_slot: Optional[int] = None,
+        default_start_time: Optional[time] = None,
+        default_end_time: Optional[time] = None,
+        default_tag: Optional[Tag] = None,
+        on_saved: Optional[Callable[[], None]] = None,
+        **kwargs,
+    ):
+        super().__init__(master, **kwargs)
+        self.title("🏷️ Przypisz tag do czasu")
+        self.geometry("490x590")
+        self.minsize(450, 520)
+        self.attributes("-topmost", True)
+        self.on_saved = on_saved
+        self.selected_color = self.PRESET_COLORS[0][1]
+
+        try:
+            self.transient(master)
+            master.update_idletasks()
+            x = master.winfo_rootx() + (master.winfo_width() // 2) - 245
+            y = master.winfo_rooty() + (master.winfo_height() // 2) - 295
+            self.geometry(f"+{max(50, x)}+{max(50, y)}")
+        except Exception:
+            pass
+
+        self._build_ui(default_day, default_slot, default_start_time, default_end_time, default_tag)
+
+    def _build_ui(self, default_day, default_slot, default_start_time, default_end_time, default_tag):
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=20, pady=(15, 10))
+
+        title_lbl = ctk.CTkLabel(
+            header_frame,
+            text="🏷️ Przypisz tag do czasu",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            anchor="w",
+        )
+        title_lbl.pack(fill="x")
+
+        sub_lbl = ctk.CTkLabel(
+            header_frame,
+            text="Zdefiniuj w jakich dniach i godzinach obowiązuje dany tag w harmonogramie.",
+            font=ctk.CTkFont(size=11),
+            text_color="gray",
+            anchor="w",
+        )
+        sub_lbl.pack(fill="x", pady=(2, 0))
+
+        content = ctk.CTkFrame(self, fg_color=("gray95", "gray17"), corner_radius=8)
+        content.pack(fill="both", expand=True, padx=15, pady=(0, 10))
+
+        # 1. Wybór tagu
+        tag_lbl = ctk.CTkLabel(content, text="Wybierz lub wpisz tag:", font=ctk.CTkFont(size=12, weight="bold"), anchor="w")
+        tag_lbl.pack(fill="x", padx=15, pady=(12, 4))
+
+        tag_names = [t.title for t in datas.tags_list if getattr(t, "title", "")]
+        menu_values = tag_names + ["+ Nowy tag..."] if tag_names else ["+ Nowy tag..."]
+
+        self.tag_menu = ctk.CTkOptionMenu(
+            content,
+            values=menu_values,
+            command=self._on_tag_menu_selected,
+            dynamic_resizing=False,
+        )
+        self.tag_menu.pack(fill="x", padx=15, pady=(0, 6))
+
+        self.tag_entry = ctk.CTkEntry(content, placeholder_text="np. Praca, Sen, Sport, Nauka")
+        self.tag_entry.pack(fill="x", padx=15, pady=(0, 8))
+
+        # Wybór koloru
+        color_row = ctk.CTkFrame(content, fg_color="transparent")
+        color_row.pack(fill="x", padx=15, pady=(0, 10))
+        ctk.CTkLabel(color_row, text="Kolor tagu:", font=ctk.CTkFont(size=11), text_color="gray").pack(side="left", padx=(0, 8))
+
+        self.color_btns = []
+        for hex_col, rgb_col in self.PRESET_COLORS:
+            btn = ctk.CTkButton(
+                color_row,
+                text="",
+                width=24,
+                height=24,
+                fg_color=hex_col,
+                hover_color=hex_col,
+                corner_radius=12,
+                border_width=0,
+                command=lambda hc=hex_col, rc=rgb_col: self._select_color(hc, rc),
+            )
+            btn.pack(side="left", padx=3)
+            self.color_btns.append((btn, hex_col, rgb_col))
+
+        # 2. Dni tygodnia
+        days_header = ctk.CTkFrame(content, fg_color="transparent")
+        days_header.pack(fill="x", padx=15, pady=(6, 4))
+        ctk.CTkLabel(days_header, text="Dni tygodnia:", font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(side="left")
+
+        quick_box = ctk.CTkFrame(days_header, fg_color="transparent")
+        quick_box.pack(side="right")
+        ctk.CTkButton(quick_box, text="Pn-Pt", width=45, height=22, font=ctk.CTkFont(size=10), command=self._select_workdays).pack(side="left", padx=2)
+        ctk.CTkButton(quick_box, text="Tydzień", width=50, height=22, font=ctk.CTkFont(size=10), command=self._select_all_days).pack(side="left", padx=2)
+        ctk.CTkButton(quick_box, text="Wyczyść", width=50, height=22, font=ctk.CTkFont(size=10), command=self._clear_days).pack(side="left", padx=2)
+
+        days_box = ctk.CTkFrame(content, fg_color="transparent")
+        days_box.pack(fill="x", padx=15, pady=(0, 10))
+        self.day_checkboxes: List[ctk.CTkCheckBox] = []
+
+        default_days_set = {default_day} if default_day is not None else {0, 1, 2, 3, 4}
+
+        for i, label in enumerate(self.DAY_LABELS):
+            cb = ctk.CTkCheckBox(days_box, text=label, width=46, checkbox_width=18, checkbox_height=18)
+            cb.pack(side="left", padx=3)
+            if i in default_days_set:
+                cb.select()
+            self.day_checkboxes.append(cb)
+
+        # 3. Godziny
+        time_lbl = ctk.CTkLabel(content, text="Przedział godzinowy:", font=ctk.CTkFont(size=12, weight="bold"), anchor="w")
+        time_lbl.pack(fill="x", padx=15, pady=(6, 4))
+
+        time_box = ctk.CTkFrame(content, fg_color="transparent")
+        time_box.pack(fill="x", padx=15, pady=(0, 10))
+
+        ctk.CTkLabel(time_box, text="Od:").pack(side="left", padx=(0, 4))
+        self.start_h = ctk.CTkOptionMenu(time_box, values=self.HOURS, width=58)
+        self.start_h.pack(side="left")
+        ctk.CTkLabel(time_box, text=":").pack(side="left", padx=2)
+        self.start_m = ctk.CTkOptionMenu(time_box, values=self.MINUTES, width=58)
+        self.start_m.pack(side="left", padx=(0, 15))
+
+        ctk.CTkLabel(time_box, text="Do:").pack(side="left", padx=(0, 4))
+        self.end_h = ctk.CTkOptionMenu(time_box, values=self.END_HOURS, width=58)
+        self.end_h.pack(side="left")
+        ctk.CTkLabel(time_box, text=":").pack(side="left", padx=2)
+        self.end_m = ctk.CTkOptionMenu(time_box, values=self.MINUTES, width=58)
+        self.end_m.pack(side="left")
+
+        if default_start_time is not None and default_end_time is not None:
+            self.start_h.set(f"{default_start_time.hour:02d}")
+            self.start_m.set(f"{(default_start_time.minute // 15) * 15:02d}")
+            end_hour_val = 24 if default_end_time == time(0, 0) else default_end_time.hour
+            self.end_h.set(f"{end_hour_val:02d}")
+            self.end_m.set(f"{(default_end_time.minute // 15) * 15:02d}")
+        elif default_slot is not None:
+            start_min = getattr(self.master, "start_hour", 6) * 60 + default_slot * 15
+            end_min = min(24 * 60, start_min + 60)
+            self.start_h.set(f"{start_min // 60:02d}")
+            self.start_m.set(f"{start_min % 60:02d}")
+            self.end_h.set(f"{end_min // 60:02d}")
+            self.end_m.set(f"{end_min % 60:02d}")
+        else:
+            self.start_h.set("09")
+            self.start_m.set("00")
+            self.end_h.set("17")
+            self.end_m.set("00")
+
+        if default_tag is not None:
+            self.tag_menu.set(default_tag.title)
+            self.tag_entry.delete(0, "end")
+            self.tag_entry.insert(0, default_tag.title)
+            if hasattr(default_tag, "color") and default_tag.color:
+                self._select_color(rgb_to_hex(default_tag.color), tuple(default_tag.color))
+        elif tag_names:
+            first_tag = datas.tags_list[0]
+            self.tag_menu.set(first_tag.title)
+            self.tag_entry.delete(0, "end")
+            self.tag_entry.insert(0, first_tag.title)
+            if hasattr(first_tag, "color") and first_tag.color:
+                self._select_color(rgb_to_hex(first_tag.color), tuple(first_tag.color))
+        else:
+            self.tag_menu.set("+ Nowy tag...")
+            self.tag_entry.insert(0, "Praca")
+            self._select_color(self.PRESET_COLORS[0][0], self.PRESET_COLORS[0][1])
+
+        self.status_lbl = ctk.CTkLabel(content, text="", font=ctk.CTkFont(size=11), text_color="red")
+        self.status_lbl.pack(fill="x", padx=15, pady=(4, 6))
+
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=15, pady=(0, 15))
+
+        self.save_btn = ctk.CTkButton(
+            btn_frame,
+            text="💾 Przypisz tag",
+            fg_color="#2e7d32",
+            hover_color="#1b5e20",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._save_tag,
+        )
+        self.save_btn.pack(side="left", padx=4, expand=True, fill="x")
+
+        self.remove_btn = ctk.CTkButton(
+            btn_frame,
+            text="🗑️ Usuń z tego czasu",
+            fg_color="#c62828",
+            hover_color="#8e0000",
+            font=ctk.CTkFont(size=12),
+            command=self._remove_tag,
+        )
+        self.remove_btn.pack(side="left", padx=4, expand=True, fill="x")
+
+        self.cancel_btn = ctk.CTkButton(
+            btn_frame,
+            text="Anuluj",
+            fg_color=("gray75", "gray30"),
+            hover_color=("gray65", "gray40"),
+            command=self.destroy,
+        )
+        self.cancel_btn.pack(side="left", padx=4)
+
+    def _select_color(self, hex_col, rgb_col):
+        self.selected_color = tuple(rgb_col)
+        for btn, h_c, r_c in self.color_btns:
+            if h_c.lower() == hex_col.lower():
+                btn.configure(border_width=2, border_color="#ffffff")
+            else:
+                btn.configure(border_width=0)
+
+    def _on_tag_menu_selected(self, choice: str):
+        if choice == "+ Nowy tag...":
+            self.tag_entry.delete(0, "end")
+            self.tag_entry.focus()
+        else:
+            self.tag_entry.delete(0, "end")
+            self.tag_entry.insert(0, choice)
+            for t in datas.tags_list:
+                if t.title == choice:
+                    if hasattr(t, "color") and t.color:
+                        self._select_color(rgb_to_hex(t.color), tuple(t.color))
+                    break
+
+    def _select_workdays(self):
+        for i, cb in enumerate(self.day_checkboxes):
+            if i < 5:
+                cb.select()
+            else:
+                cb.deselect()
+
+    def _select_all_days(self):
+        for cb in self.day_checkboxes:
+            cb.select()
+
+    def _clear_days(self):
+        for cb in self.day_checkboxes:
+            cb.deselect()
+
+    def _save_tag(self):
+        title = self.tag_entry.get().strip()
+        if not title:
+            self.status_lbl.configure(text="Podaj nazwę tagu!", text_color="red")
+            return
+
+        selected_days = [i for i, cb in enumerate(self.day_checkboxes) if cb.get()]
+        if not selected_days:
+            self.status_lbl.configure(text="Wybierz przynajmniej jeden dzień!", text_color="red")
+            return
+
+        sh = int(self.start_h.get())
+        sm = int(self.start_m.get())
+        eh = int(self.end_h.get())
+        em = int(self.end_m.get())
+
+        if eh == 24 and em > 0:
+            self.status_lbl.configure(text="Dla godziny 24 minuty muszą wynosić 00!", text_color="red")
+            return
+
+        s_min = sh * 60 + sm
+        e_min = eh * 60 + em
+        if e_min <= s_min:
+            self.status_lbl.configure(text="Godzina końca musi być późniejsza niż początku!", text_color="red")
+            return
+
+        target_tag = None
+        for t in datas.tags_list:
+            if t.title.strip().lower() == title.lower():
+                target_tag = t
+                break
+
+        if target_tag is None:
+            max_id = max((t.id for t in datas.tags_list), default=0)
+            target_tag = Tag(
+                id=max_id + 1,
+                title=title,
+                color=self.selected_color,
+                is_interactive=True,
+            )
+            datas.tags_list.append(target_tag)
+            datas.save_tags_list_to_json(datas.tags_list, "tags.json")
+
+        if not datas.weekly_schedule_list:
+            datas.weekly_schedule_list.append(WeeklySchedule())
+        ws = datas.weekly_schedule_list[0]
+
+        start_t = time(sh, sm)
+        end_t = time(0, 0) if eh == 24 else time(eh, em)
+
+        ws.assign(selected_days, start_t, end_t, target_tag)
+        datas.save_weekly_schedule_list_to_json(datas.weekly_schedule_list, "week_time.json")
+
+        if self.on_saved:
+            self.on_saved()
+
+        self.destroy()
+
+    def _remove_tag(self):
+        title = self.tag_entry.get().strip()
+        if not title:
+            self.status_lbl.configure(text="Podaj nazwę tagu do usunięcia!", text_color="red")
+            return
+
+        selected_days = [i for i, cb in enumerate(self.day_checkboxes) if cb.get()]
+        if not selected_days:
+            self.status_lbl.configure(text="Wybierz dni, z których chcesz usunąć tag!", text_color="red")
+            return
+
+        sh = int(self.start_h.get())
+        sm = int(self.start_m.get())
+        eh = int(self.end_h.get())
+        em = int(self.end_m.get())
+
+        if eh == 24 and em > 0:
+            self.status_lbl.configure(text="Dla godziny 24 minuty muszą wynosić 00!", text_color="red")
+            return
+        if (eh * 60 + em) <= (sh * 60 + sm):
+            self.status_lbl.configure(text="Godzina końca musi być późniejsza niż początku!", text_color="red")
+            return
+
+        target_tag = None
+        for t in datas.tags_list:
+            if t.title.strip().lower() == title.lower():
+                target_tag = t
+                break
+
+        if target_tag is None:
+            self.status_lbl.configure(text=f"Tag '{title}' nie istnieje na liście!", text_color="orange")
+            return
+
+        if datas.weekly_schedule_list:
+            ws = datas.weekly_schedule_list[0]
+            start_t = time(sh, sm)
+            end_t = time(0, 0) if eh == 24 else time(eh, em)
+            ws.unassign(selected_days, start_t, end_t, target_tag)
+            datas.save_weekly_schedule_list_to_json(datas.weekly_schedule_list, "week_time.json")
+
+        if self.on_saved:
+            self.on_saved()
+
+        self.destroy()
+
+
 class CalendarFrame(ctk.CTkFrame):
     """
     Zaawansowany widget kalendarza tygodniowego i dziennego
@@ -207,6 +575,7 @@ class CalendarFrame(ctk.CTkFrame):
         self.task_widgets: List[ctk.CTkFrame] = []
         self.hint_widgets: List[ctk.CTkFrame] = []
         self.last_optimization_result = None
+        self.last_optimization_monday = None
 
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -261,6 +630,16 @@ class CalendarFrame(ctk.CTkFrame):
             text_color="gray",
         )
         self.status_label.pack(side="left", padx=(0, 12))
+
+        self.add_tag_time_btn = ctk.CTkButton(
+            right_box,
+            text="🏷️ Dodaj tag do czasu",
+            width=135,
+            fg_color="#1f538d",
+            hover_color="#14375e",
+            command=self.open_add_tag_to_time_dialog,
+        )
+        self.add_tag_time_btn.pack(side="left", padx=(0, 8))
 
         self.refresh_btn = ctk.CTkButton(
             right_box,
@@ -373,13 +752,19 @@ class CalendarFrame(ctk.CTkFrame):
             time_lbl.grid(row=slot, column=0, sticky="n", pady=1)
 
             for idx in range(self.col_count):
+                day_for_col = self.days_to_render[idx]
                 cell_bg = ctk.CTkFrame(
                     self.scroll_frame,
                     fg_color=("gray85", "gray20") if slot % 2 == 0 else ("gray90", "gray17"),
                     height=24,
                     corner_radius=1,
+                    cursor="hand2",
                 )
                 cell_bg.grid(row=slot, column=idx + 1, sticky="nsew", padx=1, pady=1)
+                cell_bg.bind(
+                    "<Button-1>",
+                    lambda e, d=day_for_col, s=slot: self.open_add_tag_to_time_dialog(default_day=d, default_slot=s),
+                )
 
     def refresh(self):
         """Czyści i ponownie renderuje wskazówki tła, zadania oraz posiłki i aktywności."""
@@ -400,10 +785,15 @@ class CalendarFrame(ctk.CTkFrame):
         if datas.weekly_schedule_list:
             self._render_schedule_hints(datas.weekly_schedule_list[0])
 
-        if self.last_optimization_result is not None:
+        current_monday = self.target_date.date() - timedelta(days=self.target_date.weekday())
+        is_same_opt_week = (
+            self.last_optimization_monday is None or self.last_optimization_monday == current_monday
+        )
+        if self.last_optimization_result is not None and is_same_opt_week:
             self._render_optimization_items(self.last_optimization_result)
         else:
             self._render_tasks(datas.current_tasks_list)
+            self._render_saved_meals_and_trainings()
 
     def _render_schedule_hints(self, schedule: Optional[WeekTime]):
         """Renderuje paski tagów tła (np. godziny pracy/snu/nauki)."""
@@ -443,8 +833,9 @@ class CalendarFrame(ctk.CTkFrame):
                 hint_strip = ctk.CTkFrame(
                     self.scroll_frame,
                     fg_color=color_hex,
-                    width=5,
+                    width=6,
                     corner_radius=2,
+                    cursor="hand2",
                 )
                 hint_strip.grid(
                     row=row_start,
@@ -453,6 +844,15 @@ class CalendarFrame(ctk.CTkFrame):
                     sticky="nsw",
                     padx=(2, 0),
                     pady=1,
+                )
+                st_time = interval.start_time
+                et_dt = datetime.min + interval.end
+                et_time = et_dt.time() if interval.end < timedelta(days=1) else time(0, 0)
+                hint_strip.bind(
+                    "<Button-1>",
+                    lambda e, t=tag, d=interval.day, st=st_time, et=et_time: self.open_add_tag_to_time_dialog(
+                        default_day=d, default_start_time=st, default_end_time=et, default_tag=t
+                    ),
                 )
                 self.hint_widgets.append(hint_strip)
 
@@ -603,7 +1003,7 @@ class CalendarFrame(ctk.CTkFrame):
 
             act_widget = ScheduledActivityWidget(
                 self.scroll_frame,
-                activity_name=act.activity_type,
+                activity_name=act.name,
                 time_str=f"{start_str}-{end_str}",
             )
             act_widget.grid(
@@ -646,6 +1046,21 @@ class CalendarFrame(ctk.CTkFrame):
             time.min,
         )
 
+        now_dt = datetime.now()
+        week_end = monday_dt + timedelta(days=6, hours=23, minutes=59)
+        if week_end < now_dt:
+            self.status_label.configure(
+                text="Nie można planować w przeszłości! Przejdź do bieżącego lub przyszłego tygodnia ▶",
+                text_color="orange",
+            )
+            self.organize_btn.configure(
+                state="normal",
+                text="⚡ Organize My Tasks",
+            )
+            return
+
+        min_schedule_dt = now_dt if monday_dt <= now_dt else monday_dt
+
         def worker():
             try:
                 from optimizer import optimize_schedule, OptimizationConfig
@@ -655,6 +1070,9 @@ class CalendarFrame(ctk.CTkFrame):
 
                 cfg = OptimizationConfig(
                     reference_date=monday_dt,
+                    min_schedule_datetime=min_schedule_dt,
+                    earliest_task_time=time(self.start_hour, 0),
+                    latest_task_time=time(self.end_hour, 0),
                     population_size=25,
                     max_generations=25,
                     enable_meals=True,
@@ -708,7 +1126,36 @@ class CalendarFrame(ctk.CTkFrame):
 
                     datas.save_current_tasks_list_to_json(datas.current_tasks_list)
 
+                    # Zapis posiłków do pliku i listy datas
+                    datas.scheduled_meals_list.clear()
+                    for meal in opt_res.best_schedule.meals:
+                        meal_dt = monday_dt + timedelta(
+                            days=meal.day,
+                            hours=meal.start_time.hour,
+                            minutes=meal.start_time.minute,
+                        )
+                        meal.datetime = meal_dt
+                        meal.start_datetime = meal_dt
+                        meal.end_datetime = meal_dt + timedelta(minutes=meal.duration_minutes)
+                        datas.scheduled_meals_list.append(meal)
+                    datas.save_scheduled_meals_to_json(datas.scheduled_meals_list, "meals.json")
+
+                    # Zapis treningów do pliku i listy datas
+                    datas.trainings_list.clear()
+                    for act in opt_res.best_schedule.activities:
+                        act_dt = monday_dt + timedelta(
+                            days=act.day,
+                            hours=act.start_time.hour,
+                            minutes=act.start_time.minute,
+                        )
+                        act.datetime = act_dt
+                        act.start_datetime = act_dt
+                        act.end_datetime = act_dt + timedelta(minutes=act.duration_minutes)
+                        datas.trainings_list.append(act)
+                    datas.save_trainings_to_json(datas.trainings_list, "trainings.json")
+
                     self.last_optimization_result = opt_res
+                    self.last_optimization_monday = monday_dt.date()
                     self.refresh()
 
                     status_msg = f"✓ Zaplanowano {assigned_count} zadań (Wynik: {opt_res.best_score:.1f})"
@@ -722,6 +1169,138 @@ class CalendarFrame(ctk.CTkFrame):
                 self.after(100, check_completion)
 
         self.after(100, check_completion)
+
+    def _render_saved_meals_and_trainings(self):
+        """Renderuje zapisane posiłki i treningi z plików/list datas na siatce kalendarza."""
+        cal_start_min = self.start_hour * 60
+        cal_end_min = self.end_hour * 60
+
+        mon = self.target_date.date() - timedelta(days=self.target_date.weekday())
+        sun = mon + timedelta(days=6)
+
+        # 1. Posiłki
+        for meal in datas.scheduled_meals_list:
+            meal_dt = getattr(meal, "start_datetime", getattr(meal, "datetime", None))
+            if isinstance(meal_dt, datetime):
+                meal_date = meal_dt.date()
+                if self.is_weekly_view:
+                    if not (mon <= meal_date <= sun):
+                        continue
+                else:
+                    if meal_date != self.target_date.date():
+                        continue
+                day_idx = meal_dt.weekday()
+                start_min = meal_dt.hour * 60 + meal_dt.minute
+            else:
+                day_idx = getattr(meal, "day", 0)
+                if not self.is_weekly_view and day_idx != self.target_date.weekday():
+                    continue
+                start_t = getattr(meal, "start_time", time(12, 0))
+                start_min = start_t.hour * 60 + start_t.minute
+
+            if start_min < cal_start_min or start_min >= cal_end_min:
+                continue
+
+            duration = getattr(meal, "duration_minutes", 30)
+            row_start = (start_min - cal_start_min) // 15
+            row_span = max(1, min(self.total_intervals - row_start, duration // 15))
+            col_index = (day_idx + 1) if self.is_weekly_view else 1
+
+            end_min = start_min + duration
+            start_str = f"{start_min // 60:02d}:{start_min % 60:02d}"
+            end_str = f"{(end_min // 60) % 24:02d}:{end_min % 60:02d}"
+
+            meal_widget = ScheduledMealWidget(
+                self.scroll_frame,
+                meal_name=getattr(meal, "name", "Posiłek"),
+                time_str=f"{start_str}-{end_str}",
+            )
+            meal_widget.grid(
+                row=row_start,
+                column=col_index,
+                rowspan=row_span,
+                sticky="nsew",
+                padx=(10, 2),
+                pady=1,
+            )
+            self.task_widgets.append(meal_widget)
+
+        # 2. Treningi
+        for act in datas.trainings_list:
+            act_dt = getattr(act, "start_datetime", getattr(act, "datetime", None))
+            if isinstance(act_dt, datetime):
+                act_date = act_dt.date()
+                if self.is_weekly_view:
+                    if not (mon <= act_date <= sun):
+                        continue
+                else:
+                    if act_date != self.target_date.date():
+                        continue
+                day_idx = act_dt.weekday()
+                start_min = act_dt.hour * 60 + act_dt.minute
+            else:
+                day_idx = getattr(act, "day", 0)
+                if not self.is_weekly_view and day_idx != self.target_date.weekday():
+                    continue
+                start_t = getattr(act, "start_time", time(8, 0))
+                start_min = start_t.hour * 60 + start_t.minute
+
+            if start_min < cal_start_min or start_min >= cal_end_min:
+                continue
+
+            duration = getattr(act, "duration_minutes", 60)
+            row_start = (start_min - cal_start_min) // 15
+            row_span = max(1, min(self.total_intervals - row_start, duration // 15))
+            col_index = (day_idx + 1) if self.is_weekly_view else 1
+
+            end_min = start_min + duration
+            start_str = f"{start_min // 60:02d}:{start_min % 60:02d}"
+            end_str = f"{(end_min // 60) % 24:02d}:{end_min % 60:02d}"
+
+            act_widget = ScheduledActivityWidget(
+                self.scroll_frame,
+                activity_name=getattr(act, "name", "Trening"),
+                time_str=f"{start_str}-{end_str}",
+            )
+            act_widget.grid(
+                row=row_start,
+                column=col_index,
+                rowspan=row_span,
+                sticky="nsew",
+                padx=(10, 2),
+                pady=1,
+            )
+            self.task_widgets.append(act_widget)
+
+    def open_add_tag_to_time_dialog(
+        self,
+        default_day: Optional[int] = None,
+        default_slot: Optional[int] = None,
+        default_start_time: Optional[time] = None,
+        default_end_time: Optional[time] = None,
+        default_tag: Optional[Tag] = None,
+    ):
+        """Otwiera okno dialogowe przypisywania tagu do czasu w harmonogramie."""
+        if default_day is None:
+            default_day = self.target_date.weekday()
+
+        dialog = AddTagToTimeDialog(
+            master=self,
+            default_day=default_day,
+            default_slot=default_slot,
+            default_start_time=default_start_time,
+            default_end_time=default_end_time,
+            default_tag=default_tag,
+            on_saved=self._on_schedule_tag_saved,
+        )
+        dialog.focus()
+
+    def _on_schedule_tag_saved(self):
+        """Wywoływane po zapisaniu lub usunięciu tagu w harmonogramie."""
+        self.refresh()
+        self.status_label.configure(text="✓ Zaktualizowano tagi w harmonogramie", text_color="#4caf50")
+        if self.on_schedule_updated:
+            self.on_schedule_updated()
 
     def _default_task_click(self, task: Task):
         """Domyślne okienko szczegółów po kliknięciu w zadanie na kalendarzu."""

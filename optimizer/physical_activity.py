@@ -66,6 +66,8 @@ class PhysicalActivityConfig:
     weather_weight: float = 1.0
     air_quality_weight: float = 1.0
     missing_session_penalty: float = 80.0
+    reference_date: Optional[datetime] = None
+    min_schedule_datetime: Optional[datetime] = None
 
 
 # ==============================================================================
@@ -135,7 +137,6 @@ def extract_hourly_conditions(
     if isinstance(weather_forecast, dict):
         hourly_w = weather_forecast.get("hourly")
         if isinstance(hourly_w, dict):
-            # Check length of time series
             times = hourly_w.get("time", [])
             idx = hour_idx if (times and hour_idx < len(times)) else (hour % len(times) if times else 0)
 
@@ -480,6 +481,8 @@ def parse_physical_activity(
     sessions_per_week: int = 3,
     schedule: Optional[Any] = None,
     config: Optional[PhysicalActivityConfig] = None,
+    reference_date: Optional[datetime] = None,
+    min_schedule_datetime: Optional[datetime] = None,
     **kwargs
 ) -> List[ScheduledActivity]:
     """
@@ -504,6 +507,8 @@ def parse_physical_activity(
       - sessions_per_week: Number of training sessions to schedule across the week (default 3).
       - schedule: Optional Schedule instance to reserve grid slots and store activities.
       - config: Optional PhysicalActivityConfig instance.
+      - reference_date: Optional reference datetime of Monday 00:00 for the scheduled week.
+      - min_schedule_datetime: Optional cutoff datetime; slots before this time are rejected.
 
     Returns:
       List of ScheduledActivity objects.
@@ -514,6 +519,11 @@ def parse_physical_activity(
         cfg.sessions_per_week = kwargs["sessions_per_week"]
     else:
         cfg.sessions_per_week = sessions_per_week
+
+    if reference_date is not None:
+        cfg.reference_date = reference_date
+    if min_schedule_datetime is not None:
+        cfg.min_schedule_datetime = min_schedule_datetime
 
     for k, v in kwargs.items():
         if hasattr(cfg, k):
@@ -542,15 +552,28 @@ def parse_physical_activity(
     latest_s = time_to_slot(cfg.latest_time)
 
     candidate_days = cfg.active_days if cfg.active_days is not None else list(range(DAYS_IN_WEEK))
-    # Prefer spreading activities (e.g. Mon, Wed, Fri or days without activities yet)
+    # Prefer spreading activities across days without activities yet
     days_with_activity = {act.day for act in all_activities}
+
+    ref_dt = getattr(cfg, "reference_date", None)
+    min_dt = getattr(cfg, "min_schedule_datetime", None)
 
     # Evaluate candidate windows across available days and slots
     candidate_windows: List[Tuple[float, int, int, float, float]] = []  # (total_cost, day, start_slot, w_pen, aq_pen)
 
     for day in candidate_days:
+        if ref_dt and min_dt:
+            day_latest_dt = ref_dt + timedelta(days=day, hours=cfg.latest_time.hour, minutes=cfg.latest_time.minute)
+            if day_latest_dt < min_dt:
+                continue
+
         for s in range(earliest_s, min(latest_s - slots_needed + 1, SLOTS_PER_DAY - slots_needed + 1)):
             e = s + slots_needed
+
+            if ref_dt and min_dt:
+                slot_start_dt = ref_dt + timedelta(days=day, minutes=s * SLOT_MINUTES)
+                if slot_start_dt < min_dt:
+                    continue
 
             # Check collision with schedule grid if provided
             if schedule is not None and hasattr(schedule, "is_window_free"):
@@ -591,16 +614,33 @@ def parse_physical_activity(
 
             candidate_windows.append((total_cost, day, s, w_pen, aq_pen))
 
+    # Determine unique valid days that have available windows
+    valid_candidate_days = sorted(list({item[1] for item in candidate_windows}))
+    max_per_day = max(1, math.ceil(needed / max(1, len(valid_candidate_days)))) if valid_candidate_days else 1
+
     # Sort windows by condition cost (lowest penalty = best weather & clean air)
     candidate_windows.sort(key=lambda item: item[0])
 
-    # Greedily pick the best non-overlapping windows
+    # Greedily pick the best non-overlapping windows, strictly distributing across days
     added_count = 0
     for cost, day, s, w_pen, aq_pen in candidate_windows:
         if added_count >= needed:
             break
 
+        day_acts_count = len([a for a in all_activities if a.day == day])
+        if day_acts_count >= max_per_day:
+            continue
+
+        # If we have enough candidate days to give each session its own day, do not put 2 on one day
+        if len(days_with_activity) < min(needed, len(valid_candidate_days)) and day in days_with_activity:
+            continue
+
         e = s + slots_needed
+        # Check collision with schedule grid if provided
+        if schedule is not None and hasattr(schedule, "is_window_free"):
+            if not schedule.is_window_free(day, s, e):
+                continue
+
         # Check collision again with newly added activities
         collision = any(
             a.day == day and not (e <= a.start_slot or s >= a.end_slot)
