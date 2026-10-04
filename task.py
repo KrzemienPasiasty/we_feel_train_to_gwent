@@ -4,9 +4,10 @@ from tag import Tag
 
 
 class Task:
-    def __init__(self):
+    def __init__(self):        
         self.id: int = 0
         self.description: str = ""
+        self.start: DateTime
         self.deadline: Optional[datetime] = None
         self.time: Optional[datetime] = None
         """ required time to spend at task"""

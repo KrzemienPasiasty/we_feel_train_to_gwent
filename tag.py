@@ -11,8 +11,6 @@ class Tag:
         self.is_interactive: bool = is_interactive
         """ is task with this tag can be moved by app in time"""
 
-        self.archived: bool
-
 
 
     def convert_color_to_hex(self, color):
