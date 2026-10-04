@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # print(datas.tags_list)
     # print(datas.weekly_schedule_list)
 
-    datas.load_data_from_json("tags.json", datas.tags_list)
+    datas.load_tags_list_from_json("tags.json", datas.tags_list)
 
 
 
