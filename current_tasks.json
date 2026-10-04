@@ -1,1 +1,65 @@
-[]
+[
+    {
+        "id": 1,
+        "description": "zaprojektuj busbary",
+        "start": null,
+        "deadline": "2026-10-06T12:00:00",
+        "time": "1h",
+        "focus": 7,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 1,
+                "title": "Praca",
+                "color": [
+                    219,
+                    68,
+                    55
+                ],
+                "is_interactive": true
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "description": "Zrób zakupy",
+        "start": null,
+        "deadline": "2026-10-05T12:00:00",
+        "time": "1:30",
+        "focus": 0,
+        "priority": 4,
+        "tags": [
+            {
+                "id": 2,
+                "title": "Dom",
+                "color": [
+                    15,
+                    157,
+                    88
+                ],
+                "is_interactive": true
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "description": "naucz sie na kolokwium z numerków",
+        "start": null,
+        "deadline": "2026-10-07T08:00:00",
+        "time": "4",
+        "focus": 8,
+        "priority": 3,
+        "tags": [
+            {
+                "id": 3,
+                "title": "Ważne",
+                "color": [
+                    244,
+                    180,
+                    0
+                ],
+                "is_interactive": false
+            }
+        ]
+    }
+]

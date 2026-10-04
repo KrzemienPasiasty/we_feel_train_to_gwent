@@ -425,6 +425,26 @@ def time_to_slot(t: time) -> int:
     return (t.hour * 60 + t.minute) // SLOT_MINUTES
 
 
+def parse_deadline_datetime(val: Any) -> Optional[datetime]:
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, str):
+        s = val.strip()
+        if not s:
+            return None
+        try:
+            return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except Exception:
+            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+                try:
+                    return datetime.strptime(s, fmt)
+                except Exception:
+                    pass
+    return None
+
+
 def get_task_duration_minutes(task: Task, default_minutes: int = 60) -> int:
     """Extracts duration in minutes from task.time or fallback attribute."""
     if task.time is not None:
@@ -432,6 +452,35 @@ def get_task_duration_minutes(task: Task, default_minutes: int = 60) -> int:
             return max(15, int(task.time))
         if isinstance(task.time, timedelta):
             return max(15, int(task.time.total_seconds() // 60))
+        if isinstance(task.time, time):
+            return max(15, task.time.hour * 60 + task.time.minute)
+        if isinstance(task.time, datetime):
+            return max(15, task.time.hour * 60 + task.time.minute)
+        if isinstance(task.time, str):
+            s = task.time.strip().lower()
+            if s:
+                if "h" in s:
+                    try:
+                        parts = s.split("h")
+                        hours = float(parts[0].strip())
+                        mins = float(parts[1].replace("m", "").strip()) if len(parts) > 1 and parts[1].strip() else 0
+                        return max(15, int(hours * 60 + mins))
+                    except Exception:
+                        pass
+                if ":" in s:
+                    try:
+                        parts = s.split(":")
+                        if len(parts) >= 2:
+                            return max(15, int(parts[0]) * 60 + int(parts[1]))
+                    except Exception:
+                        pass
+                try:
+                    val = float(s)
+                    if val <= 12:
+                        return max(15, int(val * 60))
+                    return max(15, int(val))
+                except Exception:
+                    pass
     return default_minutes
 
 
@@ -846,7 +895,7 @@ def decode_permutation_to_schedule(
         best_matched_tags: List[Tag] = []
         best_candidate_score = -float("inf")
 
-        deadline_dt = getattr(task, "deadline", None)
+        deadline_dt = parse_deadline_datetime(getattr(task, "deadline", None))
         focus_val = float(getattr(task, "focus", 5) or 5)
         # Normalize focus roughly to 0..1
         focus_norm = min(1.0, max(0.0, focus_val / 10.0 if focus_val <= 10 else focus_val / 100.0))
@@ -1079,15 +1128,16 @@ def default_deadline_score(schedule: Schedule, config: OptimizationConfig) -> fl
     """Calculates score based on meeting deadlines, unassigned tasks, tag mismatch, meal spacing, and weather/air."""
     score = 100.0
     for st in schedule.assignments:
-        if st.task.deadline:
+        task_dl = parse_deadline_datetime(st.task.deadline)
+        if task_dl:
             finish_dt = st.scheduled_datetime or task_finish_datetime(
                 st.day, st.end_slot, config.reference_date
             )
             if finish_dt:
-                if finish_dt <= st.task.deadline:
+                if finish_dt <= task_dl:
                     score += 20.0
                 else:
-                    late_hours = (finish_dt - st.task.deadline).total_seconds() / 3600.0
+                    late_hours = (finish_dt - task_dl).total_seconds() / 3600.0
                     score -= late_hours * 10.0
 
     # Unassigned tasks penalty scaled by priority multiplier
@@ -1204,14 +1254,10 @@ def create_initial_population(
     # 1. Deadline ranking (shortest deadline goes first)
     def deadline_key(idx: int) -> float:
         t = tasks[idx]
-        dl = getattr(t, "deadline", None)
+        dl = parse_deadline_datetime(getattr(t, "deadline", None))
         if dl is None:
             return float("inf")
-        if isinstance(dl, datetime):
-            return dl.timestamp()
-        if isinstance(dl, (int, float)):
-            return float(dl)
-        return float("inf")
+        return dl.timestamp()
 
     deadline_order = sorted(range(num_tasks), key=deadline_key)
 

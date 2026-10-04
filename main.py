@@ -29,11 +29,11 @@ if __name__ == "__main__":
 
     window = ctk.CTk()
     window.title("Task Manager")
-    window.geometry("900x600")
-    window.minsize(700, 500)
+    window.geometry("1000x700")
+    window.minsize(800, 550)
 
     tabview = ctk.CTkTabview(window)
-    tabview.pack(fill="both", expand=True, padx=20, pady=20)
+    tabview.pack(fill="both", expand=True, padx=15, pady=15)
 
     # Tabs
     tabview.add("Current Tasks")
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     ########################################################################    CURRENT TASKS
     current_tasks_frame = ctk.CTkFrame(tabview.tab("Current Tasks"))
-    current_tasks_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    current_tasks_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
     task_list_view = TaskListFrame(
         current_tasks_frame,
@@ -52,12 +52,24 @@ if __name__ == "__main__":
     )
     task_list_view.pack(fill="both", expand=True)
 
+    ########################################################################    CALENDAR
+    calendar_frame = ctk.CTkFrame(tabview.tab("Calendar"))
+    calendar_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+    calendar_view = CalendarFrame(
+        calendar_frame,
+        is_weekly_view=True,
+        on_schedule_updated=lambda: task_list_view.refresh_tasks(),
+    )
+    calendar_view.pack(fill="both", expand=True)
+
     ########################################################################    ADD TASK
     add_task_frame = ctk.CTkFrame(tabview.tab("Add Task"))
     add_task_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     def on_task_added_callback(new_task):
         task_list_view.refresh_tasks()
+        calendar_view.refresh()
         tabview.set("Current Tasks")
 
     task_frame = TaskFrame(add_task_frame, on_task_added=on_task_added_callback)
@@ -71,21 +83,6 @@ if __name__ == "__main__":
         text="Zarządzanie tagami (Add Tag)",
         font=ctk.CTkFont(size=20, weight="bold"),
     ).pack(pady=20)
-
-    ########################################################################    CALENDAR
-    calendar_frame = ctk.CTkFrame(tabview.tab("Calendar"))
-    calendar_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-    def my_task_click_handler(task_data: dict):
-        """Funkcja callback wywoływana po kliknięciu w task."""
-        print("\n[EVENT] Kliknięto task!")
-        print(f"ID: {task_data.get('id')}")
-        print(f"Tytuł: {task_data.get('title')}")
-        print(f"Priorytet: {task_data.get('priority')}")
-        print(f"Dane pełne: {task_data}")
-
-    # calendar = CalendarFrame(calendar_frame, )
-    # calendar.pack(fill="both", expand=True, padx=10, pady=10)
 
     ########################################################################    PREFERENCES
     preferences_frame = ctk.CTkFrame(tabview.tab("Preferences"))
