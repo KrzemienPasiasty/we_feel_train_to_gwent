@@ -7,22 +7,19 @@ import datas
 
 
 if __name__ == "__main__":
-    # DATA_FILES = {
-    #     "tasks_active.json": datas.current_tasks_list,
-    #     "tasks_archived.json": datas.done_tasks_list,
-    #     "tags.json": datas.tags_list,
-    #     "week_time.json": datas.weekly_schedule_list,
-    # }
-    #
-    # """Wczytuje dane z plików JSON do list z datas.py."""
-    # for file_path, data_list in DATA_FILES.items():
-    #     datas.load_data_from_json(file_path, data_list)
-    # print(datas.current_tasks_list)
-    # print(datas.done_tasks_list)
-    # print(datas.tags_list)
-    # print(datas.weekly_schedule_list)
-
+    # Wczytanie danych z plików JSON
     datas.load_tags_list_from_json(datas.tags_list, "tags.json")
+    datas.load_current_tasks_list_from_json(datas.current_tasks_list, "current_tasks.json")
+    if not datas.current_tasks_list:
+        try:
+            datas.load_current_tasks_list_from_json(datas.current_tasks_list, "tasks_active.json")
+        except Exception:
+            pass
+    datas.load_done_tasks_list_from_json(datas.done_tasks_list, "tasks_archived.json")
+    try:
+        datas.load_weekly_schedule_list_from_json(datas.weekly_schedule_list, "week_time.json")
+    except Exception:
+        pass
 
     ctk.set_appearance_mode("Dark")
     ctk.set_default_color_theme("blue")
@@ -89,11 +86,12 @@ if __name__ == "__main__":
     preferences_frame.pack(fill="both", expand=True, padx=10, pady=10)
     ctk.CTkLabel(
         preferences_frame,
-        text="Preferencje (Preferences)",
+        text="Ustawienia (Preferences)",
         font=ctk.CTkFont(size=20, weight="bold"),
     ).pack(pady=20)
 
-    # Set default tab to Current Tasks
-    tabview.set("Current Tasks")
+    # Initial refresh with loaded data
+    task_list_view.refresh_tasks()
+    calendar_view.refresh()
 
     window.mainloop()

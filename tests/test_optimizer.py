@@ -329,5 +329,36 @@ class TestScheduleOptimizer(unittest.TestCase):
             self.assertIn("priority", item)
 
 
+    def test_untagged_task_assigned_to_untagged_time(self):
+        tag_work = Tag(1, 'Work', (200, 50, 50))
+        tag_sleep = Tag(2, 'Sleep', (50, 50, 200))
+        ws = WeeklySchedule()
+        for d in range(5):
+            ws.assign(d, time(8, 0), time(16, 0), tag_work)
+            ws.assign(d, time(23, 0), time(0, 0), tag_sleep)
+            ws.assign(d, time(0, 0), time(7, 0), tag_sleep)
+        ref_date = datetime(2026, 10, 5, 0, 0)
+        t_work = Task()
+        t_work.id = 501
+        t_work.description = 'Work Presentation'
+        t_work.time = '2h'
+        t_work.tags = [tag_work]
+        t_work.deadline = ref_date + timedelta(days=2, hours=15)
+        t_untagged = Task()
+        t_untagged.id = 502
+        t_untagged.description = 'Home Laundry with NO tags'
+        t_untagged.time = '1h'
+        t_untagged.tags = []
+        t_untagged.deadline = ref_date + timedelta(days=2, hours=22)
+        cfg = OptimizationConfig(reference_date=ref_date, population_size=15, max_generations=15, enable_meals=False, enable_physical_activity=False, random_seed=42)
+        res = optimize_schedule(scoring_functions=None, task_list=[t_work, t_untagged], weekly_schedule=ws, productivity_curve_data=[0.5] * 96, config=cfg)
+        st_work = res.best_schedule.task_assignments.get(501)
+        st_untagged = res.best_schedule.task_assignments.get(502)
+        self.assertIsNotNone(st_work)
+        self.assertIsNotNone(st_untagged)
+        self.assertTrue(time(8, 0) <= st_work.start_time and st_work.end_time <= time(16, 0))
+        for s in range(st_untagged.start_slot, st_untagged.end_slot):
+            self.assertEqual(len(ws._slots[st_untagged.day][s]), 0)
+
 if __name__ == "__main__":
     unittest.main()

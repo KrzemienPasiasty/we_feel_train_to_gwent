@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import date, datetime, time as time_value
+from typing import Any
 
 from tag import Tag
 from task import Task
@@ -53,17 +54,44 @@ def _encode_task_value(value):
 
 
 def _decode_task_value(value):
-    if not isinstance(value, dict) or "__serialized_type__" not in value:
+    if value is None:
+        return None
+
+    if isinstance(value, dict) and "__serialized_type__" in value:
+        serialized_type = value["__serialized_type__"]
+        serialized_value = value.get("value")
+        if serialized_value is None:
+            return None
+        if serialized_type == "datetime":
+            return datetime.fromisoformat(serialized_value)
+        if serialized_type == "date":
+            return date.fromisoformat(serialized_value)
+        if serialized_type == "time":
+            return time_value.fromisoformat(serialized_value)
+        return serialized_value
+
+    if isinstance(value, str):
+        s = value.strip()
+        if not s:
+            return None
+        for fmt in (
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M",
+            "%Y-%m-%d %H:%M",
+            "%Y-%m-%d",
+        ):
+            try:
+                return datetime.strptime(s, fmt)
+            except Exception:
+                pass
+        for t_fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                return datetime.strptime(s, t_fmt).time()
+            except Exception:
+                pass
         return value
 
-    serialized_type = value["__serialized_type__"]
-    serialized_value = value["value"]
-    if serialized_type == "datetime":
-        return datetime.fromisoformat(serialized_value)
-    if serialized_type == "date":
-        return date.fromisoformat(serialized_value)
-    if serialized_type == "time":
-        return time_value.fromisoformat(serialized_value)
     return value
 
 
@@ -72,7 +100,7 @@ def _tag_to_dict(tag) -> dict:
         return {
             "id": tag.id,
             "title": tag.title,
-            "color": list(tag.color) if hasattr(tag, "color") else [100, 100, 100],
+            "color": list(tag.color) if hasattr(tag, "color") and isinstance(tag.color, (list, tuple)) else [100, 100, 100],
             "is_interactive": tag.is_interactive if hasattr(tag, "is_interactive") else True,
         }
     if isinstance(tag, dict):
@@ -85,9 +113,29 @@ def _tag_to_dict(tag) -> dict:
     }
 
 
-def _tag_from_dict(tag_data: dict) -> Tag:
+def _tag_from_dict(tag_data: Any) -> Tag:
+    if isinstance(tag_data, Tag):
+        return tag_data
+
+    if isinstance(tag_data, str):
+        tag_str = tag_data.strip()
+        for known in tags_list:
+            if known.title.strip().lower() == tag_str.lower():
+                return known
+        return Tag(
+            id=0,
+            title=tag_str,
+            color=(100, 100, 100),
+            is_interactive=True,
+        )
+
     if not isinstance(tag_data, dict):
-        raise ValueError("Each tag in a JSON list must be an object")
+        return Tag(
+            id=0,
+            title=str(tag_data),
+            color=(100, 100, 100),
+            is_interactive=True,
+        )
 
     color_val = tag_data.get("color", (100, 100, 100))
     if isinstance(color_val, (list, tuple)):
@@ -95,9 +143,14 @@ def _tag_from_dict(tag_data: dict) -> Tag:
     else:
         color_tuple = (100, 100, 100)
 
+    title = tag_data.get("title", tag_data.get("name", ""))
+    for known in tags_list:
+        if known.title.strip().lower() == str(title).strip().lower():
+            return known
+
     return Tag(
         id=tag_data.get("id", 0),
-        title=tag_data.get("title", tag_data.get("name", "")),
+        title=title,
         color=color_tuple,
         is_interactive=tag_data.get("is_interactive", True),
     )
@@ -105,14 +158,15 @@ def _tag_from_dict(tag_data: dict) -> Tag:
 
 def _task_to_dict(task: Task) -> dict:
     return {
-        "id": task.id,
-        "description": task.description,
+        "id": getattr(task, "id", 0),
+        "description": getattr(task, "description", ""),
         "start": _encode_task_value(getattr(task, "start", None)),
-        "deadline": _encode_task_value(task.deadline),
-        "time": _encode_task_value(task.time),
+        "assigned_time": _encode_task_value(getattr(task, "assigned_time", None)),
+        "deadline": _encode_task_value(getattr(task, "deadline", None)),
+        "time": _encode_task_value(getattr(task, "time", None)),
         "focus": getattr(task, "focus", None),
-        "priority": task.priority,
-        "tags": [_tag_to_dict(tag) for tag in task.tags],
+        "priority": getattr(task, "priority", 1),
+        "tags": [_tag_to_dict(tag) for tag in (getattr(task, "tags", None) or [])],
     }
 
 
@@ -124,19 +178,21 @@ def _task_from_dict(task_data: dict) -> Task:
     task.id = task_data.get("id", task.id)
     task.description = task_data.get("description", task.description)
     task.start = _decode_task_value(task_data.get("start"))
+    task.assigned_time = _decode_task_value(task_data.get("assigned_time"))
     task.deadline = _decode_task_value(task_data.get("deadline"))
     task.time = _decode_task_value(task_data.get("time"))
     task.focus = task_data.get("focus")
     task.priority = task_data.get("priority", task.priority)
-    task.tags = [_tag_from_dict(tag) for tag in task_data.get("tags", [])]
+    raw_tags = task_data.get("tags") or []
+    task.tags = [_tag_from_dict(tag) for tag in raw_tags]
     return task
 
 
 def _weekly_schedule_to_dict(schedule: WeeklySchedule) -> dict:
     return {
-        "slots": [\
-            [[_tag_to_dict(tag) for tag in slot] for slot in day]\
-            for day in schedule._slots\
+        "slots": [
+            [[_tag_to_dict(tag) for tag in slot] for slot in day]
+            for day in schedule._slots
         ]
     }
 
@@ -159,7 +215,7 @@ def _weekly_schedule_from_dict(schedule_data: dict) -> WeeklySchedule:
         restored_day = []
         for slot_data in day_data:
             if not isinstance(slot_data, list):
-                raise ValueError("Each weekly schedule slot must contain a list of tags")
+                raise ValueError("Each slot must contain a list of tags")
             restored_day.append([_tag_from_dict(tag) for tag in slot_data])
         restored_slots.append(restored_day)
 
@@ -264,18 +320,26 @@ def fill_task(task: Task = None, autofill_focus: bool = True, autofill_time: boo
     """Fill missing task fields using the LLM integration."""
     if task is None:
         task = Task()
-    from llm import process_tasks_file
 
-    return process_tasks_file(task, autofill_focus, autofill_time)
+    if isinstance(autofill_focus, dict):
+        autofill_data = autofill_focus
+        task.description = autofill_data.get("description", task.description)
+        task.time = autofill_data.get("time", task.time)
+        task.focus = autofill_data.get("focus", task.focus)
+        task.priority = autofill_data.get("priority", task.priority)
+        task.tags = [_tag_from_dict(t) for t in autofill_data.get("tags", [])]
+        return task
+
+    import api.autofill_ai as autofill_ai
+
+    output = autofill_ai.autofill(task.description)
+    if "time" in output and autofill_time:
+        task.time = output["time"]
+    if "focus" in output and autofill_focus:
+        task.focus = output["focus"]
+    return task
 
 
-# Initialize default lists from disk
-try:
+if __name__ == "__main__":
     load_current_tasks_list_from_json(current_tasks_list, "current_tasks.json")
-except Exception:
-    pass
-
-try:
-    load_tags_list_from_json(tags_list, "tags.json")
-except Exception:
-    pass
+    print(current_tasks_list)

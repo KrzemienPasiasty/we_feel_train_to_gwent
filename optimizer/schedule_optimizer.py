@@ -940,7 +940,7 @@ def decode_permutation_to_schedule(
                         if alien_tags:
                             mismatched_slots += 1
 
-                if config.only_tagged_slots and not all_have_tags:
+                if config.only_tagged_slots and task_tag_ids and not all_have_tags:
                     continue
 
                 # Enforce condition: to a specific tag, tasks with the same tag are assigned firstly
@@ -977,13 +977,23 @@ def decode_permutation_to_schedule(
                             # Misses deadline
                             deadline_factor = -abs(diff_hours) / 12.0
 
-                if matched_slots_count > 0:
-                    # Bonus scales with the proportion of matching tagged slots in the window
-                    tag_bonus = matching_tag_bonus * (matched_slots_count / slots_needed)
-                elif strictly_compatible:
-                    tag_bonus = 0.5
+                if not task_tag_ids:
+                    # Task has no tags: naturally prioritize assigning to time where no tag is found
+                    if not window_tag_ids:
+                        tag_bonus = matching_tag_bonus
+                    else:
+                        tag_bonus = 0.0
                 else:
-                    tag_bonus = 0.0
+                    if matched_slots_count > 0:
+                        # Bonus scales with the proportion of matching tagged slots in the window
+                        tag_bonus = matching_tag_bonus * (matched_slots_count / slots_needed)
+                    elif not window_tag_ids:
+                        # Tagged task placed in untagged slot window (acceptable fallback)
+                        tag_bonus = 0.25
+                    elif strictly_compatible:
+                        tag_bonus = 0.5
+                    else:
+                        tag_bonus = 0.0
 
                 # Combine factors according to placement_bias
                 if placement_bias == "earliest":

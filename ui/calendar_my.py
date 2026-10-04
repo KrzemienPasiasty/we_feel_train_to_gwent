@@ -7,6 +7,7 @@ import datas
 from models.task import Task
 from models.tag import Tag
 from models.week_periods import WeekTime, WeeklySchedule
+from optimizer.schedule_optimizer import parse_deadline_datetime
 
 
 def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
@@ -460,20 +461,31 @@ class CalendarFrame(ctk.CTkFrame):
         cal_start_min = self.start_hour * 60
         cal_end_min = self.end_hour * 60
 
+        mon = self.target_date.date() - timedelta(days=self.target_date.weekday())
+        sun = mon + timedelta(days=6)
+
         for task in tasks:
             start_time = getattr(task, "assigned_time", None) or getattr(task, "start", None)
             if start_time is None:
                 continue
 
-            try:
-                task_day = start_time.weekday()
-            except AttributeError:
+            if isinstance(start_time, str):
+                start_time = parse_deadline_datetime(start_time)
+
+            if not isinstance(start_time, (datetime, date)):
                 continue
 
-            if not self.is_weekly_view and task_day != self.target_date.weekday():
-                continue
+            task_date = start_time.date() if isinstance(start_time, datetime) else start_time
+            task_day = start_time.weekday()
 
-            start_min = start_time.hour * 60 + start_time.minute
+            if self.is_weekly_view:
+                if isinstance(start_time, datetime) and not (mon <= task_date <= sun):
+                    continue
+            else:
+                if isinstance(start_time, datetime) and task_date != self.target_date.date():
+                    continue
+
+            start_min = start_time.hour * 60 + start_time.minute if isinstance(start_time, datetime) else 9 * 60
             if start_min < cal_start_min or start_min >= cal_end_min:
                 continue
 
@@ -484,7 +496,7 @@ class CalendarFrame(ctk.CTkFrame):
             col_index = (task_day + 1) if self.is_weekly_view else 1
 
             end_min = start_min + duration_minutes
-            start_str = f"{start_time.hour:02d}:{start_time.minute:02d}"
+            start_str = f"{start_time.hour:02d}:{start_time.minute:02d}" if isinstance(start_time, datetime) else "09:00"
             end_str = f"{(end_min // 60) % 24:02d}:{end_min % 60:02d}"
 
             widget = TaskWidget(
@@ -724,10 +736,18 @@ class CalendarFrame(ctk.CTkFrame):
         priority_str = priority_map.get(priority, str(priority))
 
         assigned_time = getattr(task, "assigned_time", None) or getattr(task, "start", None)
+        if isinstance(assigned_time, str):
+            assigned_time = parse_deadline_datetime(assigned_time)
         assigned_str = assigned_time.strftime("%Y-%m-%d %H:%M") if isinstance(assigned_time, datetime) else "Nie przypisano"
 
         deadline = getattr(task, "deadline", None)
-        deadline_str = deadline.strftime("%Y-%m-%d %H:%M") if isinstance(deadline, datetime) else str(deadline or "Brak")
+        if isinstance(deadline, str):
+            deadline_parsed = parse_deadline_datetime(deadline)
+            deadline_str = deadline_parsed.strftime("%Y-%m-%d %H:%M") if deadline_parsed else deadline
+        elif isinstance(deadline, datetime):
+            deadline_str = deadline.strftime("%Y-%m-%d %H:%M")
+        else:
+            deadline_str = str(deadline or "Brak")
 
         duration_min = _parse_task_duration_minutes(task)
         focus = getattr(task, "focus", 5)
