@@ -2,7 +2,7 @@ import json
 
 import customtkinter as ctk
 
-from calendar import CalendarFrame
+from calendar_my import CalendarFrame
 from task import Task, TaskFrame
 from tag import Tag
 from week_periods import WeeklySchedule
@@ -11,31 +11,10 @@ from week_periods import WeeklySchedule
 
 
 
-current_tasks_list = []
-done_tasks_list = []
-tags_list = []
-weeklySheadule_list = []
-past_weeklySheadule_list = []
 
 
-def save_list_to_json(data_list, file_path):
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(data_list, file, ensure_ascii=False, indent=4)
 
 
-def read_list_from_json(data_list, file_path):
-    try:
-        with open(file_path, "r", encoding="utf-8") as file:
-            loaded_data = json.load(file)
-    except FileNotFoundError:
-        return data_list
-
-    if not isinstance(loaded_data, list):
-        raise ValueError(f"Expected a JSON list in {file_path}")
-
-    data_list.clear()
-    data_list.extend(loaded_data)
-    return data_list
 
 
 if __name__ == "__main__":
@@ -66,7 +45,7 @@ if __name__ == "__main__":
         print("działa llm autofill")
         return 0
 
-    task = TaskFrame(add_task_frame, tags, llm_autofill)
+    task = TaskFrame(add_task_frame)
     task.pack(fill="both", expand=True, padx=10, pady=10)
 
 

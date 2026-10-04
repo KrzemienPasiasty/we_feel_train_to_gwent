@@ -4,6 +4,46 @@ from tag import Tag # Zakładamy, że ten plik (tag.py) istnieje obok
 
 from task import Task # Zakładamy, że ten plik (task.py) istnieje obok
 
+
+current_tasks_list = []
+done_tasks_list = []
+tags_list = []
+weeklySheadule_list = []
+past_weeklySheadule_list = []
+
+
+
+def save_list_to_json(data_list, file_path):
+    with open(file_path, "w", encoding="utf-8") as file:
+        json.dump(data_list, file, ensure_ascii=False, indent=4)
+
+
+def read_list_from_json(data_list, file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            loaded_data = json.load(file)
+    except FileNotFoundError:
+        return data_list
+
+    if not isinstance(loaded_data, list):
+        raise ValueError(f"Expected a JSON list in {file_path}")
+
+    data_list.clear()
+    data_list.extend(loaded_data)
+    return data_list
+
+
+def add_task(task: Task, needed_autofill: bool):
+    if needed_autofill:
+        print("AAAAAAAA")
+        task = fill_task(task, None)
+    print("BBBBBBBBBBBBBb")
+    current_tasks_list.append(task)
+
+
+
+
+
 def fill_task(empty_task: Task, task_data: dict) -> Task:
     """
     Funkcja przyjmująca pusty obiekt Task i napełniająca go danymi ze słownika.
@@ -29,7 +69,7 @@ def fill_task(empty_task: Task, task_data: dict) -> Task:
     for tag_dict in raw_tags:
         # Zakładam, że klasa Tag przyjmuje 'name' w konstruktorze lub można to przypisać w ten sposób.
         # Jeśli twoja klasa Tag działa inaczej, dostosuj poniższe 2 linijki:
-        new_tag = Tag()          # Zakładamy, że Tag też wymaga pustego inicjatora
+        new_tag = Tag(1, "ff", (0, 0, 0), True)          # Zakładamy, że Tag też wymaga pustego inicjatora
         new_tag.name = tag_dict.get("name", "")
         empty_task.tags.append(new_tag)
         
