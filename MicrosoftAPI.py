@@ -337,50 +337,40 @@ def fetch_all_tasks(
 
 
 def convert_to_task(ms_task: Dict[str, Any], task_id: Optional[int] = None) -> Optional[Any]:
-    """Converts a raw Microsoft task dictionary to the project's Task model."""
     if Task is None:
         return None
-
+    
     task = Task()
-    if task_id is not None:
-        task.id = task_id
-    elif data is not None and hasattr(data, "last_ID"):
-        data.last_ID += 1
-        task.id = data.last_ID
-    else:
-        task.id = 1
-
+    task.id = task_id if task_id is not None else 1
+    task.source = f"microsoft:{ms_task.get('source') or 'todo'}"
+    task.external_id = str(ms_task.get("id", "")) or None
+    
     title = ms_task.get("title", "")
     notes = ms_task.get("notes")
     task.description = f"{title}\n{notes}".strip() if notes else title
     task.deadline = ms_task.get("due")
+    
+    # Uzupełnienie wymaganych i domyślnych pól
     task.time = None
+    task.start = None
+    task.focus = 0  # Domyślne skupienie
     task.priority = ms_task.get("priority", 2)
     task.tags = []
-
-    # Tag with list name and source
+    
     list_name = ms_task.get("list")
     source = ms_task.get("source")
-
+    
     if Tag is not None:
         if list_name:
-            try:
-                t1 = Tag(list_name)
-                t1.title = list_name
-                t1.color = (31, 83, 141)
-                task.tags.append(t1)
-            except Exception:
-                pass
+            # Poprawna inicjalizacja: id, title, color, is_interactive
+            t1 = Tag(0, list_name, (31, 83, 141), False)
+            task.tags.append(t1)
+            
         if source:
-            try:
-                t2 = Tag(source)
-                t2.title = source
-                t2.color = (0, 120, 215)
-                task.tags.append(t2)
-            except Exception:
-                pass
-
-    task.llm_metadata = ""
+            t2 = Tag(0, source, (0, 120, 215), False)
+            task.tags.append(t2)
+            
+    task.llm_metadata = "Zaimportowano z Microsoft"
     return task
 
 

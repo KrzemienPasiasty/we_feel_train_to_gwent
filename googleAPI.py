@@ -131,30 +131,28 @@ def fetch_all_tasks(service) -> List[Dict[str, Any]]:
 
 
 def convert_to_task(google_task: Dict[str, Any], task_id: Optional[int] = None) -> Optional[Any]:
-    """Converts a raw Google task dictionary to the project's Task model."""
     if Task is None:
         return None
-
+    
     task = Task()
-    if task_id is not None:
-        task.id = task_id
-    elif data is not None and hasattr(data, "last_ID"):
-        data.last_ID += 1
-        task.id = data.last_ID
-    else:
-        task.id = 1
-
+    task.id = task_id if task_id is not None else 1
+    task.source = "google"
+    task.external_id = google_task.get("id")
+    
     title = google_task.get("title", "")
     notes = google_task.get("notes")
     task.description = f"{title}\n{notes}".strip() if notes else title
     task.deadline = google_task.get("due")
+    
+    # Uzupełnienie wymaganych i domyślnych pól
     task.time = None
-    task.priority = None
+    task.start = None
+    task.focus = 0  
+    task.priority = 1  # Wcześniej było None, zamieniamy na bezpieczne 1
     task.tags = []
-
-    task.llm_metadata = ""
+    task.llm_metadata = "Zaimportowano z Google"
+    
     return task
-
 
 def download_tasks(
     user_id: Optional[str] = None,

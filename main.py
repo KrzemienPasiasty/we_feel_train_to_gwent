@@ -1,8 +1,17 @@
 import json
 
-import customtkinter as ctk
+try:
+    import tkinter  # noqa: F401 - required by customtkinter
+    import customtkinter as ctk
+except ModuleNotFoundError as exc:
+    raise SystemExit(
+        "This project needs a Python build with Tkinter support. "
+        "Use 'py -3.14 main.py' or install a full Python distribution that includes tkinter. "
+        "Then run: py -3.14 -m pip install -r requirements.txt"
+    ) from exc
 
 from calendar_my import CalendarFrame
+from sync_ui import SyncFrame
 from task import Task, TaskFrame
 from tag import Tag
 from week_periods import WeeklySchedule
@@ -92,20 +101,7 @@ if __name__ == "__main__":
     ########################################################################
     ctk.CTkLabel(add_task_frame, text="Add Task").pack(pady=20)
     ctk.CTkLabel(calendar_frame, text="Calendar").pack(pady=20)
-    ctk.CTkLabel(preferences_frame, text="Preferences").pack(pady=20)
+    sync_panel = SyncFrame(preferences_frame)
+    sync_panel.pack(fill="both", expand=True, padx=20, pady=20)
 
     window.mainloop()
-
-
-
-
-
-
-    # Osadzenie kalendarza jako zwykły widget
-    # calendar = WeeklyCalendarFrame(
-    #     master=window,
-    #     start_hour=8,
-    #     end_hour=17,
-    #     command=my_task_click_handler
-    # )
-    # calendar.pack(fill="both", expand=True, padx=10, pady=10)

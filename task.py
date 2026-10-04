@@ -14,6 +14,8 @@ class Task:
         self.focus: float | int
         self.priority: int = 1
         self.tags: List[Tag] = []
+        self.source: str = ""
+        self.external_id: Optional[str] = None
 
     def __repr__(self) -> str:
         return (
