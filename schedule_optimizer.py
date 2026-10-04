@@ -10,6 +10,18 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 from tag import Tag
 from task import Task
 from week_periods import DAYS_IN_WEEK, SLOT_MINUTES, SLOTS_PER_DAY, Weekday, WeeklySchedule
+from sleep_tracker import (
+    SleepQualityData,
+    SleepStageBreakdown,
+    calculate_safte_effectiveness,
+    download_garmin_sleep_data,
+    download_samsung_sleep_data,
+    download_sleep_quality_data,
+    parse_garmin_sleep_data,
+    parse_samsung_sleep_data,
+    safte_scaling_factor_for_slot,
+    scale_productivity_curve_with_safte,
+)
 from physical_activity import (
     DEFAULT_ACTIVITY_TAGS,
     PhysicalActivityConfig,
@@ -182,6 +194,12 @@ class OptimizationConfig:
     activity_air_quality_weight: float = 1.0
     physical_activity_config: Optional[PhysicalActivityConfig] = None
 
+    # Sleep data & SAFTE scaling settings
+    sleep_data: Optional[Any] = None
+    enable_safte_scaling: bool = True
+    safte_target_sleep_minutes: float = 480.0
+    safte_baseline_effectiveness: float = 100.0
+
     def __post_init__(self):
         if self.meal_config is not None:
             self.meals_per_day = self.meal_config.meals_per_day
@@ -228,6 +246,7 @@ class ProductivityCurve:
         if isinstance(self._data, (list, tuple)):
             if len(self._data) == 0:
                 return 0.5
+
             # 2D list: 7 days x 96 slots
             if isinstance(self._data[0], (list, tuple)):
                 d_idx = day % len(self._data)
@@ -250,6 +269,20 @@ class ProductivityCurve:
             return 0.5
 
         return 0.5
+
+    def apply_safte_scaling(
+        self,
+        sleep_data: Any,
+        target_sleep_minutes: float = 480.0,
+        baseline_nominal_effectiveness: float = 100.0
+    ) -> None:
+        """Scales current productivity curve using the adapted SAFTE equation."""
+        self._data = scale_productivity_curve_with_safte(
+            self._data,
+            sleep_data,
+            target_sleep_minutes=target_sleep_minutes,
+            baseline_nominal_effectiveness=baseline_nominal_effectiveness
+        )
 
 
 # ==============================================================================
@@ -1384,6 +1417,15 @@ def optimize_schedule(
 
     if cfg.random_seed is not None:
         random.seed(cfg.random_seed)
+
+    # Scale productivity curve using adapted SAFTE model if sleep data is provided
+    if getattr(cfg, "enable_safte_scaling", True) and getattr(cfg, "sleep_data", None) is not None:
+        productivity_curve_data = scale_productivity_curve_with_safte(
+            productivity_curve_data,
+            cfg.sleep_data,
+            target_sleep_minutes=getattr(cfg, "safte_target_sleep_minutes", 480.0),
+            baseline_nominal_effectiveness=getattr(cfg, "safte_baseline_effectiveness", 100.0)
+        )
 
     # Wrap productivity curve
     prod_curve = ProductivityCurve(productivity_curve_data)
