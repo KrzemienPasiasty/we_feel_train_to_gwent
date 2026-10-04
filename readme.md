@@ -15,6 +15,9 @@ Next, the list of tasks is analized by dedicated algorythm and distributed in ti
 It takes into account user defined tags representing constant activities during the week time like sleeping or eating dinner. You can define your own tags that will allow you to specify the time ranges in which your tasks should be distributed.
 
 ## How to run
+You can download compiled version of app from release page in github and run FutureFlow.exe. Opening app can take some seconds.
+
+Or you can open code using local interpreter configured like shown below:
 
 From PowerShell in the project folder:
 
@@ -23,10 +26,6 @@ py -3.14 -m pip install -r requirements.txt
 py -3.14 main.py
 ```
 
-or simply:
 
-```powershell
-.\run_app.ps1
-```
 
 This project expects Python 3.14 with Tkinter support.
