@@ -5,11 +5,41 @@ from calendar_my import CalendarFrame
 from task import Task, TaskFrame
 from task_list import TaskListFrame
 from tag import Tag
-from week_periods import WeeklySchedule
+from week_periods import WeekTime
 import datas
 
 
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
+    # DATA_FILES = {
+    #     "tasks_active.json": datas.current_tasks_list,
+    #     "tasks_archived.json": datas.done_tasks_list,
+    #     "tags.json": datas.tags_list,
+    #     "week_time.json": datas.weekly_schedule_list,
+    # }
+    #
+    # """Wczytuje dane z plików JSON do list z datas.py."""
+    # for file_path, data_list in DATA_FILES.items():
+    #     datas.load_data_from_json(file_path, data_list)
+    # print(datas.current_tasks_list)
+    # print(datas.done_tasks_list)
+    # print(datas.tags_list)
+    # print(datas.weekly_schedule_list)
+
+    datas.load_data_from_json("tags.json", datas.tags_list)
+
+
+
+
+
+
     ctk.set_appearance_mode("Dark")
     ctk.set_default_color_theme("blue")
 
@@ -70,11 +100,11 @@ if __name__ == "__main__":
         print(f"Priorytet: {task_data.get('priority')}")
         print(f"Dane pełne: {task_data}")
 
-    ctk.CTkLabel(
-        calendar_frame,
-        text="Widok kalendarza (Calendar)",
-        font=ctk.CTkFont(size=20, weight="bold"),
-    ).pack(pady=20)
+
+    # calendar = CalendarFrame(calendar_frame, )
+    # calendar.pack(fill="both", expand=True, padx=10, pady=10)
+
+
 
     ########################################################################    PREFERENCES
     preferences_frame = ctk.CTkFrame(tabview.tab("Preferences"))

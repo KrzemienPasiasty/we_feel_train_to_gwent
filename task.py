@@ -10,13 +10,17 @@ class Task:
     def __init__(self):        
         self.id: int = 0
         self.description: str = ""
-        self.start: Optional[datetime] = None
-        self.deadline: Optional[datetime | str] = None
-        self.time: Optional[datetime | str] = None
+        self.start: DateTime
+        """when it is possible to start a task (inverted deadline)"""
+        self.deadline: Optional[datetime] = None
+        self.time: Optional[datetime] = None
         """ required time to spend at task"""
         self.focus: float | int = 5
         self.priority: int = 1
         self.tags: List[Tag] = []
+
+        self.assigned_time: Optional[datetime] = None
+        """assigned by app time when the task should be in progress"""
 
     def __repr__(self) -> str:
         return (
@@ -40,9 +44,7 @@ class TaskFrame(ctk.CTkFrame):
     def __init__(self, master, on_task_added: Optional[Callable[[Task], None]] = None, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.on_task_added = on_task_added
-        self.available_tags = datas.tags_list
-        self.autofill_callback = datas.fill_task
+
         self.selected_tags = []
         self.tag_buttons = {}
 
@@ -218,7 +220,7 @@ class TaskFrame(ctk.CTkFrame):
             self.time_entry.insert(0, data["time"])
 
         if "tags" in data:
-            for tag in self.available_tags:
+            for tag in datas.tags_list:
                 if tag.title in data["tags"] and tag not in self.selected_tags:
                     self._toggle_tag(tag)
 
@@ -230,7 +232,7 @@ class TaskFrame(ctk.CTkFrame):
         time_input = self.time_entry.get().strip()
         if not time_input:
             autofill_time = True
-            new_task.time = ""
+            new_task.time = None
         else:
             new_task.time = time_input
 
