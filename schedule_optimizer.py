@@ -10,6 +10,16 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 from tag import Tag
 from task import Task
 from week_periods import DAYS_IN_WEEK, SLOT_MINUTES, SLOTS_PER_DAY, Weekday, WeeklySchedule
+from physical_activity import (
+    DEFAULT_ACTIVITY_TAGS,
+    PhysicalActivityConfig,
+    ScheduledActivity,
+    calculate_activity_conditions_penalty,
+    calculate_air_quality_slot_penalty,
+    calculate_weather_slot_penalty,
+    parse_physical_activities_from_weekly_schedule,
+    parse_physical_activity,
+)
 
 
 # ==============================================================================
@@ -118,24 +128,18 @@ class MealConfig:
 
 @dataclass
 class OptimizationConfig:
-    """
-    Configuration parameters for genetic schedule optimization.
-    All parameters are fully editable via variables or keyword arguments.
-    """
-    population_size: int = 50
-    reproduction_threshold: float = 0.75      # Only individuals >= 75% of previous best score can reproduce
-    convergence_threshold: float = 0.01       # Score difference between consecutive populations to stop
-    mutation_chance: float = 0.15             # Probability of mutation for an offspring
-    crossover_chance: float = 0.85            # Probability of PMX crossover
-    max_generations: int = 100                # Hard limit on generations
-    min_generations: int = 2                  # Minimum generations before convergence can trigger
-    patience: int = 2                         # Consecutive generations below threshold needed to converge
-    elitism_count: int = 2                    # Number of best solutions to carry over unchanged
-    higher_is_better: bool = True             # True if higher score is better
-    default_task_duration_minutes: int = 60   # Default duration when task.time is not specified
-    require_tag_match: bool = False           # If True, task tags must strictly match slot tags
-    only_tagged_slots: bool = False           # If True, tasks can only be scheduled into tagged slots
-    convergence_metric: str = "best"          # "best" or "average"
+    """Holds all hyper-parameters and flags for the genetic optimizer."""
+    population_size: int = 20                 # Size of the population
+    reproduction_threshold: float = 0.75      # Only >= 75% of previous best score can reproduce
+    convergence_threshold: float = 0.01       # Score difference threshold to consider convergence
+    patience: int = 3                         # Consecutive generations below threshold before stopping
+    max_generations: int = 50                 # Safeguard upper limit on generations
+    mutation_chance: float = 0.15             # Probability of individual undergoing mutation
+    elitism_count: int = 2                    # Direct survivors from previous generation
+    default_task_duration_minutes: int = 60   # Fallback duration if task.time is None
+    strict_deadline_cutoff: bool = False      # If True, discard/penalize schedules with missed deadlines heavily
+    only_tagged_slots: bool = False           # If True, schedule tasks only into explicitly tagged slots
+    higher_is_better: bool = True             # Fitness orientation
     tournament_size: int = 3                  # Size for tournament selection
     random_seed: Optional[int] = None         # Random seed for reproducibility
     reference_date: Optional[datetime] = None # Monday date corresponding to day 0 of the weekly schedule
@@ -162,6 +166,17 @@ class OptimizationConfig:
     active_meal_days: Optional[List[int]] = None
     meal_config: Optional[MealConfig] = None
 
+    # Physical activity & weather / air quality settings
+    enable_physical_activity: bool = False
+    activity_duration_minutes: int = 60
+    activities_per_week: int = 3
+    weather_air_forecast: Optional[Any] = None
+    weather_forecast: Optional[Any] = None
+    air_quality_forecast: Optional[Any] = None
+    activity_weather_weight: float = 1.0
+    activity_air_quality_weight: float = 1.0
+    physical_activity_config: Optional[PhysicalActivityConfig] = None
+
     def __post_init__(self):
         if self.meal_config is not None:
             self.meals_per_day = self.meal_config.meals_per_day
@@ -176,99 +191,94 @@ class OptimizationConfig:
             self.meal_color = self.meal_config.meal_color
             self.active_meal_days = self.meal_config.active_meal_days
 
+        if self.physical_activity_config is not None:
+            self.enable_physical_activity = True
+            self.activity_duration_minutes = self.physical_activity_config.duration_minutes
+            self.activities_per_week = self.physical_activity_config.sessions_per_week
+            self.activity_weather_weight = self.physical_activity_config.weather_weight
+            self.activity_air_quality_weight = self.physical_activity_config.air_quality_weight
+
 
 # ==============================================================================
-# Productivity Curve Model
+# Productivity Curve Representation
 # ==============================================================================
 
 class ProductivityCurve:
     """
-    Wrapper for productivity curve data.
+    Wraps productivity data across days and slots.
     Supports:
-      - 2D array: [day][slot] (7 days x 96 slots)
-      - 1D array: [slot] of 96 values (reused for each day)
-      - 1D array: [hour] of 24 values
-      - Dict: {(day, slot): value} or {slot: value}
-      - Callable: f(day, slot) -> float
-      - Scalar float
+      - 2D matrix / nested list: curve[day][slot]
+      - 1D list of length 96 (replicated across each day)
+      - Dictionary with day keys
+      - Generic callable fn(day: int, slot: int) -> float
     """
 
     def __init__(self, data: Any):
-        self.data = data
+        self._data = data
 
     def get_value(self, day: int, slot: int) -> float:
-        if self.data is None:
-            return 1.0
+        if callable(self._data):
+            return float(self._data(day, slot))
 
-        if callable(self.data):
-            try:
-                return float(self.data(day, slot))
-            except Exception:
-                return 1.0
+        if isinstance(self._data, (list, tuple)):
+            if len(self._data) == 0:
+                return 0.5
+            # 2D list: 7 days x 96 slots
+            if isinstance(self._data[0], (list, tuple)):
+                d_idx = day % len(self._data)
+                s_idx = slot % len(self._data[d_idx])
+                return float(self._data[d_idx][s_idx])
+            else:
+                # 1D list: standard daily curve across 96 slots
+                s_idx = slot % len(self._data)
+                return float(self._data[s_idx])
 
-        if isinstance(self.data, dict):
-            if (day, slot) in self.data:
-                return float(self.data[(day, slot)])
-            if slot in self.data:
-                return float(self.data[slot])
+        if isinstance(self._data, dict):
+            # Keyed by day integer or string
+            day_data = self._data.get(day, self._data.get(str(day)))
+            if day_data is not None:
+                if isinstance(day_data, (list, tuple)):
+                    return float(day_data[slot % len(day_data)])
+                elif callable(day_data):
+                    return float(day_data(slot))
+                return float(day_data)
             return 0.5
-
-        if isinstance(self.data, (list, tuple)):
-            if len(self.data) == 0:
-                return 0.5
-            if len(self.data) == DAYS_IN_WEEK and isinstance(self.data[0], (list, tuple)):
-                day_data = self.data[day % DAYS_IN_WEEK]
-                if slot < len(day_data):
-                    return float(day_data[slot])
-                return 0.5
-            if len(self.data) == SLOTS_PER_DAY:
-                return float(self.data[slot % SLOTS_PER_DAY])
-            if len(self.data) == 24:
-                return float(self.data[(slot * SLOT_MINUTES // 60) % 24])
-
-        if isinstance(self.data, (int, float)):
-            return float(self.data)
 
         return 0.5
 
-    def average_window(self, day: int, start_slot: int, end_slot: int) -> float:
-        if end_slot <= start_slot:
-            return self.get_value(day, start_slot)
-        total = sum(self.get_value(day, s) for s in range(start_slot, end_slot))
-        return total / (end_slot - start_slot)
-
 
 # ==============================================================================
-# Schedule Representation
+# Schedule Representation & Decoding
 # ==============================================================================
 
 @dataclass
 class ScheduledTask:
-    """Represents a task assigned to a specific time interval in the week."""
+    """Represents a scheduled instance of a task."""
     task: Task
-    day: int                 # 0 = Monday, ..., 6 = Sunday
-    start_slot: int          # 0..95
-    end_slot: int            # start_slot + slots_needed
+    day: int                  # 0..6 (Monday..Sunday)
+    start_slot: int           # 0..95
+    end_slot: int             # start_slot + slots_needed
     start_time: time
     end_time: time
     duration_minutes: int
-    scheduled_datetime: Optional[datetime] = None
     matched_tags: List[Tag] = field(default_factory=list)
+    scheduled_datetime: Optional[datetime] = None
 
 
 class Schedule:
     """
-    Decoded schedule containing concrete assignments of tasks and meals
-    to days and slots.
+    Decoded schedule containing concrete assignments of tasks, meals, and
+    physical activities to days and slots.
     """
 
     def __init__(self, weekly_schedule: WeeklySchedule):
         self.weekly_schedule = weekly_schedule
         self.assignments: List[ScheduledTask] = []
         self.meals: List[ScheduledMeal] = []
+        self.activities: List[ScheduledActivity] = []
         self.unassigned_tasks: List[Task] = []
         self.task_assignments: Dict[int, ScheduledTask] = {}
-        # grid[day][slot] = task_id, negative ID for meal, or None
+        # grid[day][slot] = task_id, negative ID for meal/activity, or None
         self.grid: List[List[Optional[int]]] = [
             [None for _ in range(SLOTS_PER_DAY)] for _ in range(DAYS_IN_WEEK)
         ]
@@ -290,6 +300,17 @@ class Schedule:
         day_meals.sort(key=lambda m: m.start_slot)
         return day_meals
 
+    def add_activity(self, activity: ScheduledActivity) -> None:
+        self.activities.append(activity)
+        act_id = -(2000 + activity.day * 10 + activity.activity_index)
+        for s in range(activity.start_slot, activity.end_slot):
+            self.grid[activity.day][s] = act_id
+
+    def get_activities_for_day(self, day: int) -> List[ScheduledActivity]:
+        day_acts = [a for a in self.activities if a.day == day]
+        day_acts.sort(key=lambda a: a.start_slot)
+        return day_acts
+
     def is_slot_free(self, day: int, slot: int) -> bool:
         return self.grid[day][slot] is None
 
@@ -298,10 +319,14 @@ class Schedule:
             return False
         return all(self.grid[day][s] is None for s in range(start_slot, end_slot))
 
-    def to_calendar_dicts(self, include_meals: bool = True) -> List[Dict[str, Any]]:
+    def to_calendar_dicts(
+        self,
+        include_meals: bool = True,
+        include_activities: bool = True
+    ) -> List[Dict[str, Any]]:
         """
-        Converts scheduled tasks and meals to the dictionary format expected by
-        WeeklyCalendarFrame.set_tasks(...) in calender.py.
+        Converts scheduled tasks, meals, and physical activities to the dictionary
+        format expected by WeeklyCalendarFrame.set_tasks(...) in calender.py.
         """
         results = []
         for st in self.assignments:
@@ -342,6 +367,10 @@ class Schedule:
             for m in self.meals:
                 results.append(m.to_calendar_dict())
 
+        if include_activities:
+            for a in self.activities:
+                results.append(a.to_calendar_dict())
+
         return results
 
 
@@ -365,45 +394,36 @@ def get_task_duration_minutes(task: Task, default_minutes: int = 60) -> int:
             return max(15, int(task.time))
         if isinstance(task.time, timedelta):
             return max(15, int(task.time.total_seconds() // 60))
-        if isinstance(task.time, time):
-            mins = task.time.hour * 60 + task.time.minute
-            return max(15, mins) if mins > 0 else default_minutes
-        if isinstance(task.time, datetime):
-            mins = task.time.hour * 60 + task.time.minute
-            return max(15, mins) if mins > 0 else default_minutes
-
-    if hasattr(task, "duration") and task.duration is not None:
-        try:
-            return max(15, int(task.duration))
-        except (ValueError, TypeError):
-            pass
-
-    return max(15, default_minutes)
+    return default_minutes
 
 
-def tag_identifiers(tags: Iterable[Tag]) -> set:
-    ids = set()
+def tag_identifiers(tags: Optional[Iterable[Any]]) -> set:
+    """Returns normalized set of string representations/identifiers for tags."""
+    if not tags:
+        return set()
+    result = set()
     for t in tags:
         if hasattr(t, "title") and t.title:
-            ids.add(str(t.title).strip().lower())
-        if hasattr(t, "id") and t.id is not None:
-            ids.add(f"id:{t.id}")
-        if not hasattr(t, "title") and not hasattr(t, "id"):
-            ids.add(str(t).strip().lower())
-    return ids
+            result.add(str(t.title).strip().lower())
+        elif hasattr(t, "name") and t.name:
+            result.add(str(t.name).strip().lower())
+        else:
+            result.add(str(t).strip().lower())
+    return result
 
 
 def match_tags(task_tags: List[Tag], slot_tags: List[Tag]) -> Tuple[bool, List[Tag]]:
-    """Checks if task tags match slot tags, returning compatibility and matching tags."""
+    """Checks whether task tags intersect with slot tags."""
     if not task_tags:
-        # If task has no specific tags, it can fit in any slot
         return True, slot_tags
 
-    if not slot_tags:
-        return False, []
-
     task_set = tag_identifiers(task_tags)
-    matching = [st for st in slot_tags if tag_identifiers([st]) & task_set]
+    matching = []
+    for st in slot_tags:
+        s_id = tag_identifiers([st])
+        if s_id & task_set:
+            matching.append(st)
+
     return (len(matching) > 0), matching
 
 
@@ -479,11 +499,11 @@ def task_finish_datetime(
     end_slot: int,
     reference_date: Optional[datetime]
 ) -> Optional[datetime]:
-    """Calculates the concrete finish datetime for a scheduled task."""
-    if reference_date is None:
+    """Computes completion datetime given schedule day (0..6) and slot."""
+    if not reference_date:
         return None
-    # day 0 is reference_date (Monday)
-    date_day = reference_date.date() + timedelta(days=day)
+    # Day 0 is reference_date (Monday)
+    date_day = reference_date + timedelta(days=day)
     t = slot_to_time(end_slot)
     return datetime.combine(date_day, t)
 
@@ -709,7 +729,8 @@ def decode_permutation_to_schedule(
 ) -> Schedule:
     """
     Decodes an ordered permutation of task indices into concrete time slots
-    in the WeeklySchedule, parsing and respecting meal times and tag constraints.
+    in the WeeklySchedule, parsing and respecting meal times, physical activities,
+    and tag constraints.
     """
     schedule = Schedule(weekly_schedule)
 
@@ -722,7 +743,23 @@ def decode_permutation_to_schedule(
             meal_offsets=meal_offsets
         )
 
-    # 2. Place tasks around meals and reserved windows
+    # 2. Parse and place physical activities if enabled
+    if getattr(config, "enable_physical_activity", False):
+        w_fc = getattr(config, "weather_air_forecast", None) or getattr(config, "weather_forecast", None)
+        aq_fc = getattr(config, "air_quality_forecast", None)
+        parse_physical_activity(
+            duration_minutes=getattr(config, "activity_duration_minutes", 60),
+            weekly_schedule=weekly_schedule,
+            weather_forecast=w_fc,
+            air_quality_forecast=aq_fc,
+            sessions_per_week=getattr(config, "activities_per_week", 3),
+            schedule=schedule,
+            config=getattr(config, "physical_activity_config", None),
+            weather_weight=getattr(config, "activity_weather_weight", 1.0),
+            air_quality_weight=getattr(config, "activity_air_quality_weight", 1.0)
+        )
+
+    # 3. Place tasks around meals, activities, and reserved windows
     penalize_mismatch = getattr(config, "penalize_tag_mismatch", True)
     growth = max(1.001, float(getattr(config, "tag_mismatch_growth_rate", 1.5)))
     base_mismatch_p = float(getattr(config, "tag_mismatch_base_penalty", 10.0))
@@ -739,6 +776,7 @@ def decode_permutation_to_schedule(
         best_matched_tags: List[Tag] = []
         best_candidate_score = -float("inf")
 
+        deadline_dt = getattr(task, "deadline", None)
         focus_val = float(getattr(task, "focus", 5) or 5)
         # Normalize focus roughly to 0..1
         focus_norm = min(1.0, max(0.0, focus_val / 10.0 if focus_val <= 10 else focus_val / 100.0))
@@ -746,16 +784,16 @@ def decode_permutation_to_schedule(
 
         # Scan all available days and slot windows
         for day in range(DAYS_IN_WEEK):
-            # Scan slots within the day
+            # Check slots within the day
             for s in range(0, SLOTS_PER_DAY - slots_needed + 1):
                 e = s + slots_needed
 
-                # Check window availability (meals and other tasks are marked as occupied)
+                # Check window availability (meals, activities, and other tasks are marked as occupied)
                 if not schedule.is_window_free(day, s, e):
                     continue
 
-                # Check tags across the window
-                window_slot_tags = []
+                # Inspect tag compatibility across the window
+                window_slot_tags: List[Tag] = []
                 all_have_tags = True
                 strictly_compatible = True
                 matched_window_tags: List[Tag] = []
@@ -765,8 +803,8 @@ def decode_permutation_to_schedule(
                     slot_tags = weekly_schedule._slots[day][slot_idx]
                     if not slot_tags:
                         all_have_tags = False
-                    is_compat, matched = match_tags(task.tags, slot_tags)
-                    if task.tags and not is_compat:
+                    is_match, matched = match_tags(task.tags, slot_tags)
+                    if not is_match and task.tags:
                         strictly_compatible = False
                     matched_window_tags.extend(matched)
                     window_slot_tags.extend(slot_tags)
@@ -780,39 +818,50 @@ def decode_permutation_to_schedule(
                 if config.only_tagged_slots and not all_have_tags:
                     continue
 
-                if config.require_tag_match and task.tags and not strictly_compatible:
-                    continue
+                # Average productivity in window
+                avg_prod = sum(productivity_curve.get_value(day, slot_i) for slot_i in range(s, e)) / slots_needed
 
-                # Candidate window evaluation
-                time_cost = (day * SLOTS_PER_DAY + s) / (DAYS_IN_WEEK * SLOTS_PER_DAY)  # 0 (start) to 1 (end)
-                avg_prod = productivity_curve.average_window(day, s, e)
+                # Earliest time factor (normalized within week: 0 to 1)
+                earliness = 1.0 - ((day * SLOTS_PER_DAY + s) / (DAYS_IN_WEEK * SLOTS_PER_DAY))
 
-                # Productivity correlation: high focus benefits from high productivity
-                prod_alignment = 1.0 - abs(focus_norm - avg_prod)
+                # Productivity correlation factor (smaller absolute difference between focus and productivity)
+                prod_match = 1.0 - abs(focus_norm - avg_prod)
 
-                # Deadline penalty/bonus in placement
+                # Deadline compliance bonus / penalty
                 deadline_factor = 0.0
-                if task.deadline:
-                    dt = task_finish_datetime(day, e, config.reference_date)
-                    if dt:
-                        if dt <= task.deadline:
-                            deadline_factor = 1.0 - (task.deadline - dt).total_seconds() / (7 * 86400)
+                if deadline_dt and config.reference_date:
+                    scheduled_end_dt = task_finish_datetime(day, e, config.reference_date)
+                    if scheduled_end_dt:
+                        diff_hours = (deadline_dt - scheduled_end_dt).total_seconds() / 3600.0
+                        if diff_hours >= 0:
+                            # Finishes before deadline: bonus scaled by margin (max +1.0)
+                            deadline_factor = min(1.0, diff_hours / 24.0)
                         else:
-                            # Late
-                            deadline_factor = -2.0
+                            # Misses deadline
+                            deadline_factor = -abs(diff_hours) / 12.0
 
-                tag_bonus = 2.0 if matched_window_tags else (0.5 if not task.tags else -1.0)
+                tag_bonus = 0.5 if strictly_compatible else 0.0
 
-                # Placement scoring by bias
+                # Combine factors according to placement_bias
                 if placement_bias == "earliest":
-                    candidate_score = 10.0 * (1.0 - time_cost) + 2.0 * deadline_factor + tag_bonus
+                    candidate_score = (
+                        0.50 * earliness
+                        + 0.35 * deadline_factor
+                        + 0.15 * prod_match
+                        + tag_bonus
+                    )
                 elif placement_bias == "productivity":
-                    candidate_score = 10.0 * prod_alignment + 3.0 * avg_prod + tag_bonus - 0.5 * time_cost
+                    candidate_score = (
+                        0.60 * prod_match
+                        + 0.25 * deadline_factor
+                        + 0.15 * earliness
+                        + tag_bonus
+                    )
                 else:  # balanced
                     candidate_score = (
-                        5.0 * (1.0 - time_cost)
-                        + 5.0 * prod_alignment
-                        + 2.0 * deadline_factor
+                        0.35 * prod_match
+                        + 0.35 * deadline_factor
+                        + 0.30 * earliness
                         + tag_bonus
                     )
 
@@ -831,18 +880,22 @@ def decode_permutation_to_schedule(
                     best_matched_tags = matched_window_tags
 
         if best_day is not None and best_start is not None and best_end is not None:
-            scheduled = ScheduledTask(
+            start_t = slot_to_time(best_start)
+            end_t = slot_to_time(best_end)
+            sched_dt = task_finish_datetime(best_day, best_end, config.reference_date)
+
+            st = ScheduledTask(
                 task=task,
                 day=best_day,
                 start_slot=best_start,
                 end_slot=best_end,
-                start_time=slot_to_time(best_start),
-                end_time=slot_to_time(best_end),
-                duration_minutes=slots_needed * SLOT_MINUTES,
-                scheduled_datetime=task_finish_datetime(best_day, best_end, config.reference_date),
-                matched_tags=best_matched_tags
+                start_time=start_t,
+                end_time=end_t,
+                duration_minutes=duration_minutes,
+                matched_tags=best_matched_tags,
+                scheduled_datetime=sched_dt
             )
-            schedule.add_assignment(scheduled)
+            schedule.add_assignment(st)
         else:
             schedule.unassigned_tasks.append(task)
 
@@ -850,85 +903,86 @@ def decode_permutation_to_schedule(
 
 
 # ==============================================================================
-# Genetic Operators: PMX Crossover and Mutation
+# Genetic Operators: PMX & Mutation
 # ==============================================================================
 
 def partially_mixed_crossover(parent1: List[int], parent2: List[int]) -> Tuple[List[int], List[int]]:
     """
-    Partially Mapped Crossover (PMX), also known as Partially Mixed Crossover.
-    Produces two valid offspring permutations from two parent permutations.
+    Partially Mapped Crossover (PMX) for permutation-encoded individuals.
+    Ensures every offspring is a valid permutation without missing or duplicated genes.
     """
     size = len(parent1)
-    if size <= 1:
+    if size < 2:
         return parent1.copy(), parent2.copy()
 
-    # Pick two distinct crossover points
     cx1 = random.randint(0, size - 2)
     cx2 = random.randint(cx1 + 1, size - 1)
 
-    child1: List[Optional[int]] = [None] * size
-    child2: List[Optional[int]] = [None] * size
+    child1 = [None] * size
+    child2 = [None] * size
 
-    # Copy the chosen slice
+    # 1. Copy crossover segment from parent1 to child1, parent2 to child2
     child1[cx1:cx2 + 1] = parent1[cx1:cx2 + 1]
     child2[cx1:cx2 + 1] = parent2[cx1:cx2 + 1]
 
-    # Map elements for child1 from parent2
+    # 2. Map items from parent2 segment into child1
     for i in range(cx1, cx2 + 1):
-        val = parent2[i]
-        if val not in child1[cx1:cx2 + 1]:
-            curr = i
-            while cx1 <= curr <= cx2:
-                mapped_val = parent1[curr]
-                curr = parent2.index(mapped_val)
-            child1[curr] = val
+        gene = parent2[i]
+        if gene not in child1[cx1:cx2 + 1]:
+            curr_pos = i
+            while cx1 <= curr_pos <= cx2:
+                mapped_val = parent1[curr_pos]
+                curr_pos = parent2.index(mapped_val)
+            child1[curr_pos] = gene
 
-    # Map elements for child2 from parent1
-    for i in range(cx1, cx2 + 1):
-        val = parent1[i]
-        if val not in child2[cx1:cx2 + 1]:
-            curr = i
-            while cx1 <= curr <= cx2:
-                mapped_val = parent2[curr]
-                curr = parent1.index(mapped_val)
-            child2[curr] = val
-
-    # Fill remaining positions directly
+    # 3. Fill remaining positions in child1 from parent2
     for i in range(size):
         if child1[i] is None:
             child1[i] = parent2[i]
+
+    # Repeat for child2
+    for i in range(cx1, cx2 + 1):
+        gene = parent1[i]
+        if gene not in child2[cx1:cx2 + 1]:
+            curr_pos = i
+            while cx1 <= curr_pos <= cx2:
+                mapped_val = parent2[curr_pos]
+                curr_pos = parent1.index(mapped_val)
+            child2[curr_pos] = gene
+
+    for i in range(size):
         if child2[i] is None:
             child2[i] = parent1[i]
 
-    return [int(x) for x in child1], [int(x) for x in child2]
+    return child1, child2
 
 
 def mutate_permutation(permutation: List[int], mutation_chance: float) -> List[int]:
     """
-    Applies mutation to a permutation with probability mutation_chance.
-    Uses swap or segment inversion.
+    Applies swap or inversion mutation on permutation with probability mutation_chance.
     """
-    mutated = permutation.copy()
-    if len(mutated) < 2:
-        return mutated
+    if len(permutation) < 2 or random.random() > mutation_chance:
+        return permutation.copy()
 
-    if random.random() < mutation_chance:
-        mutation_type = random.choice(["swap", "invert"])
+    mutated = permutation.copy()
+    op = random.choice(["swap", "invert"])
+
+    if op == "swap":
+        i, j = random.sample(range(len(mutated)), 2)
+        mutated[i], mutated[j] = mutated[j], mutated[i]
+    else:  # invert slice
         i, j = sorted(random.sample(range(len(mutated)), 2))
-        if mutation_type == "swap":
-            mutated[i], mutated[j] = mutated[j], mutated[i]
-        elif mutation_type == "invert":
-            mutated[i:j + 1] = reversed(mutated[i:j + 1])
+        mutated[i:j + 1] = reversed(mutated[i:j + 1])
 
     return mutated
 
 
 # ==============================================================================
-# Scoring and Evaluation
+# Default Scoring Functions
 # ==============================================================================
 
 def default_deadline_score(schedule: Schedule, config: OptimizationConfig) -> float:
-    """Calculates score based on meeting deadlines, unassigned tasks, tag mismatch, and meal spacing."""
+    """Calculates score based on meeting deadlines, unassigned tasks, tag mismatch, meal spacing, and weather/air."""
     score = 100.0
     for st in schedule.assignments:
         if st.task.deadline:
@@ -973,46 +1027,58 @@ def default_deadline_score(schedule: Schedule, config: OptimizationConfig) -> fl
         )
         score -= meal_penalty
 
+    # Physical activity bad conditions penalties
+    for act in schedule.activities:
+        score -= (act.weather_penalty + act.air_quality_penalty)
+
     return score
 
 
 def default_productivity_score(schedule: Schedule, productivity_curve: ProductivityCurve) -> float:
     """Calculates correlation of task focus with productivity curve."""
-    total_alignment = 0.0
+    if not schedule.assignments:
+        return 0.0
+
+    total_corr = 0.0
     for st in schedule.assignments:
         focus = float(getattr(st.task, "focus", 5) or 5)
-        focus_norm = min(1.0, max(0.0, focus / 10.0 if focus <= 10 else focus / 100.0))
-        avg_prod = productivity_curve.average_window(st.day, st.start_slot, st.end_slot)
-        alignment = 1.0 - abs(focus_norm - avg_prod)
-        total_alignment += alignment * 25.0
-    return total_alignment
+        norm_focus = min(1.0, max(0.0, focus / 10.0 if focus <= 10 else focus / 100.0))
+
+        slots = list(range(st.start_slot, st.end_slot))
+        if slots:
+            avg_prod = sum(productivity_curve.get_value(st.day, s) for s in slots) / len(slots)
+            # Higher score when focus and productivity are closely aligned
+            diff = abs(norm_focus - avg_prod)
+            total_corr += (1.0 - diff) * 20.0
+
+    total_corr -= len(schedule.unassigned_tasks) * 30.0
+    return total_corr
 
 
 def evaluate_schedule(
     schedule: Schedule,
-    scoring_functions: Union[Callable[[Schedule], float], Iterable[Callable[[Schedule], float]], None],
+    scoring_functions: Optional[Union[Callable[[Schedule], float], List[Callable[[Schedule], float]]]],
     productivity_curve: ProductivityCurve,
     config: OptimizationConfig
 ) -> float:
-    """Evaluates a schedule using the user-provided scoring function(s) or defaults."""
+    """Evaluates a schedule against passed scoring function(s) or defaults."""
     if scoring_functions is None:
-        return default_deadline_score(schedule, config) + default_productivity_score(schedule, productivity_curve)
+        d_score = default_deadline_score(schedule, config)
+        p_score = default_productivity_score(schedule, productivity_curve)
+        return 0.5 * d_score + 0.5 * p_score
 
     if callable(scoring_functions):
         return float(scoring_functions(schedule))
 
-    if isinstance(scoring_functions, Iterable):
-        total = 0.0
-        for fn in scoring_functions:
-            if callable(fn):
-                total += float(fn(schedule))
-        return total
+    if isinstance(scoring_functions, (list, tuple)):
+        scores = [float(fn(schedule)) for fn in scoring_functions if callable(fn)]
+        return sum(scores) / len(scores) if scores else 0.0
 
-    return default_deadline_score(schedule, config)
+    return 0.0
 
 
 # ==============================================================================
-# Individual and Population Management
+# Population Management
 # ==============================================================================
 
 @dataclass
@@ -1028,28 +1094,29 @@ def create_initial_population(
     tasks: List[Task],
     weekly_schedule: WeeklySchedule,
     productivity_curve: ProductivityCurve,
-    scoring_functions: Any,
+    scoring_functions: Optional[Union[Callable[[Schedule], float], List[Callable[[Schedule], float]]]],
     config: OptimizationConfig
 ) -> List[Individual]:
     """
-    Creates the first population according to requirements:
-      1. Schedule based only on time to deadlines (shortest time to deadline goes first).
-      2. Schedule based only on correlation of task focus with productivity curve.
-      3. Mixed combinations of both with varying blends and diversity.
+    Builds the 1st Population containing:
+      - 1 schedule based only on shortest time to deadline first.
+      - 1 schedule based only on highest task focus correlation with productivity curve.
+      - (population_size - 2) schedules based on mixed permutations of both.
     """
     num_tasks = len(tasks)
     if num_tasks == 0:
         return []
 
-    # 1. Deadline-based ranking (Earliest Due Date)
-    now_ref = config.reference_date or datetime.now()
-
+    # 1. Deadline ranking (shortest deadline goes first)
     def deadline_key(idx: int) -> float:
         t = tasks[idx]
-        if t.deadline is None:
+        dl = getattr(t, "deadline", None)
+        if dl is None:
             return float("inf")
-        if isinstance(t.deadline, datetime):
-            return t.deadline.timestamp()
+        if isinstance(dl, datetime):
+            return dl.timestamp()
+        if isinstance(dl, (int, float)):
+            return float(dl)
         return float("inf")
 
     deadline_order = sorted(range(num_tasks), key=deadline_key)
@@ -1061,7 +1128,7 @@ def create_initial_population(
 
     focus_order = sorted(range(num_tasks), key=focus_key)
 
-    # Calculate rank maps
+    # Map rank positions
     deadline_rank_map = {idx: rank for rank, idx in enumerate(deadline_order)}
     focus_rank_map = {idx: rank for rank, idx in enumerate(focus_order)}
 
@@ -1079,7 +1146,6 @@ def create_initial_population(
     # Pure focus-productivity individual (meals slightly shifted to avoid focus peaks)
     prod_offsets = []
     for m_idx in range(meals_count):
-        # Evenly spread slight offsets
         offset_val = 15 if m_idx % 2 == 1 else -15
         prod_offsets.append(offset_val)
 
@@ -1091,16 +1157,16 @@ def create_initial_population(
     population.append(ind_productivity)
 
     # Mixed individuals
-    num_mixed = max(0, config.population_size - len(population))
-    for k in range(num_mixed):
-        # Varying mix ratio alpha from 0.05 to 0.95
-        alpha = (k + 1) / (num_mixed + 1)
-        bias = "earliest" if alpha > 0.65 else ("productivity" if alpha < 0.35 else "balanced")
+    needed_mixed = max(0, config.population_size - len(population))
+    for i in range(needed_mixed):
+        # Blend ratio alpha from 0.1 to 0.9 with random jitter
+        a = (i + 1) / (needed_mixed + 1)
+        bias = "balanced" if (0.3 <= a <= 0.7) else ("earliest" if a > 0.7 else "productivity")
 
-        def mixed_key(idx: int, a=alpha) -> float:
-            d_rank = deadline_rank_map[idx] / max(1, num_tasks - 1)
-            f_rank = focus_rank_map[idx] / max(1, num_tasks - 1)
-            jitter = random.gauss(0, 0.05)
+        def mixed_key(idx: int) -> float:
+            d_rank = deadline_rank_map[idx]
+            f_rank = focus_rank_map[idx]
+            jitter = random.uniform(-0.15, 0.15) * num_tasks
             return a * d_rank + (1.0 - a) * f_rank + jitter
 
         mixed_order = sorted(range(num_tasks), key=mixed_key)
@@ -1127,73 +1193,55 @@ def create_initial_population(
     return population
 
 
-def select_parent(
-    candidates: List[Individual],
-    tournament_size: int,
-    higher_is_better: bool
-) -> Individual:
-    """Selects an individual using tournament selection."""
-    pool_size = min(len(candidates), max(1, tournament_size))
-    sample = random.sample(candidates, pool_size)
-    if higher_is_better:
-        return max(sample, key=lambda ind: ind.score)
-    else:
-        return min(sample, key=lambda ind: ind.score)
-
-
 def is_eligible_to_reproduce(
-    ind_score: float,
-    best_score_prev: float,
-    threshold: float,
-    higher_is_better: bool
+    candidate_score: float,
+    previous_best_score: float,
+    threshold: float = 0.75,
+    higher_is_better: bool = True
 ) -> bool:
     """
-    Checks if an individual score is better than threshold (e.g. 75%)
-    of the best score from the previous population.
+    Checks if a candidate's score meets the reproduction eligibility threshold:
+    Score must be better than 75% of best score from previous population.
     """
     if higher_is_better:
-        if best_score_prev > 0:
-            return ind_score >= threshold * best_score_prev
-        elif best_score_prev == 0:
-            return ind_score >= 0.0
+        if previous_best_score >= 0:
+            cutoff = previous_best_score * threshold
         else:
-            # Negative scores: threshold better means closer to best_score_prev
-            allowed_drop = abs(best_score_prev) * (1.0 - threshold)
-            return ind_score >= (best_score_prev - allowed_drop)
+            cutoff = previous_best_score * (2.0 - threshold)
+        return candidate_score >= cutoff
     else:
-        # Minimization
-        if best_score_prev > 0:
-            allowed_increase = best_score_prev * (1.0 - threshold)
-            return ind_score <= (best_score_prev + allowed_increase)
-        else:
-            return ind_score <= threshold * best_score_prev
+        # Lower is better (cost minimization)
+        cutoff = previous_best_score / threshold if previous_best_score > 0 else previous_best_score * threshold
+        return candidate_score <= cutoff
+
+
+def tournament_select(
+    eligible_pool: List[Individual],
+    tournament_size: int,
+    higher_is_better: bool = True
+) -> Individual:
+    """Selects one individual via tournament selection from eligible pool."""
+    k = min(len(eligible_pool), max(1, tournament_size))
+    contestants = random.sample(eligible_pool, k)
+    if higher_is_better:
+        return max(contestants, key=lambda ind: ind.score)
+    else:
+        return min(contestants, key=lambda ind: ind.score)
 
 
 # ==============================================================================
-# Optimization Result & Stats
+# Main Optimization Function
 # ==============================================================================
-
-@dataclass
-class GenerationStats:
-    generation: int
-    best_score: float
-    average_score: float
-    eligible_count: int
-    score_difference: float
-
 
 class OptimizationResult:
-    """
-    Container for the final optimization results.
-    Can be unpacked like a tuple (best_schedule, best_score).
-    """
+    """Encapsulates the final optimization results and history."""
 
     def __init__(
         self,
         best_schedule: Schedule,
         best_score: float,
         best_individual: Individual,
-        history: List[GenerationStats],
+        history: List[Dict[str, float]],
         generations_run: int,
         converged: bool,
         config: OptimizationConfig
@@ -1206,9 +1254,16 @@ class OptimizationResult:
         self.converged = converged
         self.config = config
 
-    def to_calendar_dicts(self, include_meals: bool = True) -> List[Dict[str, Any]]:
+    def to_calendar_dicts(
+        self,
+        include_meals: bool = True,
+        include_activities: bool = True
+    ) -> List[Dict[str, Any]]:
         """Direct access to GUI calendar dictionaries."""
-        return self.best_schedule.to_calendar_dicts(include_meals=include_meals)
+        return self.best_schedule.to_calendar_dicts(
+            include_meals=include_meals,
+            include_activities=include_activities
+        )
 
     def __iter__(self):
         yield self.best_schedule
@@ -1216,21 +1271,18 @@ class OptimizationResult:
 
     def __repr__(self) -> str:
         return (
-            f"OptimizationResult(best_score={self.best_score:.4f}, "
+            f"OptimizationResult(best_score={self.best_score:.2f}, "
             f"generations_run={self.generations_run}, "
             f"converged={self.converged}, "
             f"assigned_tasks={len(self.best_schedule.assignments)}, "
             f"scheduled_meals={len(self.best_schedule.meals)}, "
+            f"scheduled_activities={len(self.best_schedule.activities)}, "
             f"unassigned_tasks={len(self.best_schedule.unassigned_tasks)})"
         )
 
 
-# ==============================================================================
-# Main Optimization Function
-# ==============================================================================
-
 def optimize_schedule(
-    scoring_functions: Union[Callable[[Schedule], float], Iterable[Callable[[Schedule], float]], None],
+    scoring_functions: Optional[Union[Callable[[Schedule], float], List[Callable[[Schedule], float]]]],
     task_list: List[Task],
     weekly_schedule: WeeklySchedule,
     productivity_curve_data: Any,
@@ -1238,8 +1290,8 @@ def optimize_schedule(
     **kwargs
 ) -> OptimizationResult:
     """
-    Optimizes task assignment and meal scheduling into a weekly schedule using
-    an evolutionary algorithm.
+    Optimizes task assignment, meal scheduling, and physical activity into a weekly
+    schedule using an evolutionary algorithm.
 
     Workflow:
       1. Generates the first population containing:
@@ -1247,33 +1299,26 @@ def optimize_schedule(
          - A schedule based strictly on task focus correlation with productivity curve.
          - Mixed combinations of both.
          - Meal blocks respecting duration, counts, and spacing limits.
+         - Physical activities avoiding bad weather and poor air quality.
       2. Scores all generated schedules with the passed scoring function(s).
       3. Generates consecutive populations using Partially Mapped Crossover (PMX)
          and mutation.
-      4. In 2nd and subsequent populations, only individuals with scores better than
-         75% of the previous population's best score are allowed to reproduce.
-      5. Terminates when the score difference between consecutive populations falls
-         below the set threshold (or max generations is reached).
+      4. Restricts reproduction strictly to individuals whose score is better
+         than 75% of the previous generation's best score.
+      5. Evolves new populations until the score difference between consecutive
+         populations achieves a value below the convergence threshold for `patience` rounds.
 
-    Parameters:
-      - scoring_functions: single scoring function or list of scoring functions.
-      - task_list: list of Task instances to schedule.
-      - weekly_schedule: WeeklySchedule instance with assigned tags.
-      - productivity_curve_data: 2D/1D list, dict, or callable for productivity curve.
-      - config: Optional OptimizationConfig object.
-      - **kwargs: Any OptimizationConfig parameter can be passed directly here.
-
-    Returns:
-      OptimizationResult with the best schedule and run statistics.
+    All parameters are editable via OptimizationConfig or direct keyword arguments.
     """
-    # Merge config and keyword arguments
-    if config is None:
-        cfg = OptimizationConfig(**kwargs)
-    else:
+    # Initialize or override configuration
+    if config is not None:
         cfg = copy.copy(config)
-        for k, v in kwargs.items():
-            if hasattr(cfg, k):
-                setattr(cfg, k, v)
+    else:
+        cfg = OptimizationConfig()
+
+    for k, v in kwargs.items():
+        if hasattr(cfg, k):
+            setattr(cfg, k, v)
 
     if cfg.random_seed is not None:
         random.seed(cfg.random_seed)
@@ -1286,6 +1331,20 @@ def optimize_schedule(
         empty_schedule = Schedule(weekly_schedule)
         if cfg.enable_meals and cfg.meals_per_day > 0:
             populate_meals_for_schedule(empty_schedule, weekly_schedule, cfg)
+        if cfg.enable_physical_activity:
+            w_fc = getattr(cfg, "weather_air_forecast", None) or getattr(cfg, "weather_forecast", None)
+            aq_fc = getattr(cfg, "air_quality_forecast", None)
+            parse_physical_activity(
+                duration_minutes=cfg.activity_duration_minutes,
+                weekly_schedule=weekly_schedule,
+                weather_forecast=w_fc,
+                air_quality_forecast=aq_fc,
+                sessions_per_week=cfg.activities_per_week,
+                schedule=empty_schedule,
+                config=cfg.physical_activity_config,
+                weather_weight=cfg.activity_weather_weight,
+                air_quality_weight=cfg.activity_air_quality_weight
+            )
         return OptimizationResult(
             best_schedule=empty_schedule,
             best_score=0.0,
@@ -1309,63 +1368,52 @@ def optimize_schedule(
         best_individual = min(current_population, key=lambda ind: ind.score)
 
     best_score = best_individual.score
-    avg_score = sum(ind.score for ind in current_population) / len(current_population)
+    history: List[Dict[str, float]] = [{
+        "generation": 1,
+        "best_score": best_score,
+        "mean_score": sum(ind.score for ind in current_population) / len(current_population)
+    }]
 
-    history: List[GenerationStats] = [
-        GenerationStats(
-            generation=0,
-            best_score=best_score,
-            average_score=avg_score,
-            eligible_count=len(current_population),
-            score_difference=0.0
-        )
-    ]
-
-    previous_best_score = best_score
-    consecutive_converged = 0
+    generations_run = 1
     converged = False
-    gen = 0
+    consecutive_converged = 0
 
     # --------------------------------------------------------------------------
-    # Step 2: Generational Evolution Loop
+    # Step 2: Evolutionary Loop (Consecutive Generations)
     # --------------------------------------------------------------------------
-    while gen < cfg.max_generations:
-        gen += 1
+    for gen in range(2, cfg.max_generations + 1):
+        prev_best_score = best_score
 
-        # Determine eligible reproducers:
-        # For Gen 1 (producing Gen 2), all Gen 0 individuals are valid parents.
-        # For Gen 2+, only individuals with score better than 75% of previous best score reproduce.
-        if gen == 1:
-            eligible_parents = current_population
-        else:
-            eligible_parents = [
-                ind for ind in current_population
-                if is_eligible_to_reproduce(
-                    ind.score,
-                    previous_best_score,
-                    cfg.reproduction_threshold,
-                    cfg.higher_is_better
-                )
-            ]
-
-        # Guard against empty or single-individual breeding pool
-        if len(eligible_parents) < 2:
-            sorted_pop = sorted(
-                current_population,
-                key=lambda ind: ind.score,
-                reverse=cfg.higher_is_better
+        # Filter reproduction pool: only those with score better than 75% of previous best
+        eligible_pool = [
+            ind for ind in current_population
+            if is_eligible_to_reproduce(
+                ind.score,
+                prev_best_score,
+                threshold=cfg.reproduction_threshold,
+                higher_is_better=cfg.higher_is_better
             )
-            eligible_parents = sorted_pop[:max(2, min(len(sorted_pop), cfg.elitism_count))]
+        ]
 
-        # Elitism: retain top individuals
+        # Fallback if nobody qualified
+        if not eligible_pool:
+            if cfg.higher_is_better:
+                top_cutoff = max(1, int(len(current_population) * 0.25))
+                sorted_pop = sorted(current_population, key=lambda ind: ind.score, reverse=True)
+            else:
+                top_cutoff = max(1, int(len(current_population) * 0.25))
+                sorted_pop = sorted(current_population, key=lambda ind: ind.score)
+            eligible_pool = sorted_pop[:top_cutoff]
+
         next_population: List[Individual] = []
+
+        # Elitism: preserve top performers
         if cfg.elitism_count > 0:
-            sorted_current = sorted(
-                current_population,
-                key=lambda ind: ind.score,
-                reverse=cfg.higher_is_better
-            )
-            for elite in sorted_current[:cfg.elitism_count]:
+            if cfg.higher_is_better:
+                elites = sorted(current_population, key=lambda ind: ind.score, reverse=True)[:cfg.elitism_count]
+            else:
+                elites = sorted(current_population, key=lambda ind: ind.score)[:cfg.elitism_count]
+            for elite in elites:
                 next_population.append(Individual(
                     permutation=elite.permutation.copy(),
                     placement_bias=elite.placement_bias,
@@ -1376,14 +1424,13 @@ def optimize_schedule(
 
         # Generate offspring via PMX crossover and mutation
         while len(next_population) < cfg.population_size:
-            p1 = select_parent(eligible_parents, cfg.tournament_size, cfg.higher_is_better)
-            p2 = select_parent(eligible_parents, cfg.tournament_size, cfg.higher_is_better)
+            p1 = tournament_select(eligible_pool, cfg.tournament_size, cfg.higher_is_better)
+            p2 = tournament_select(eligible_pool, cfg.tournament_size, cfg.higher_is_better)
 
-            if random.random() < cfg.crossover_chance:
-                c1_perm, c2_perm = partially_mixed_crossover(p1.permutation, p2.permutation)
-            else:
-                c1_perm, c2_perm = p1.permutation.copy(), p2.permutation.copy()
+            # Partially Mapped Crossover (PMX)
+            c1_perm, c2_perm = partially_mixed_crossover(p1.permutation, p2.permutation)
 
+            # Mutation
             c1_perm = mutate_permutation(c1_perm, cfg.mutation_chance)
             c2_perm = mutate_permutation(c2_perm, cfg.mutation_chance)
 
@@ -1434,49 +1481,39 @@ def optimize_schedule(
                     ind.schedule, scoring_functions, prod_curve, cfg
                 )
 
-        # Update best tracking
+        current_population = next_population
+        generations_run = gen
+
+        # Track top performer
         if cfg.higher_is_better:
-            gen_best_ind = max(next_population, key=lambda ind: ind.score)
+            current_best = max(current_population, key=lambda ind: ind.score)
         else:
-            gen_best_ind = min(next_population, key=lambda ind: ind.score)
+            current_best = min(current_population, key=lambda ind: ind.score)
 
-        gen_best_score = gen_best_ind.score
-        gen_avg_score = sum(ind.score for ind in next_population) / len(next_population)
+        if cfg.higher_is_better and current_best.score > best_score:
+            best_score = current_best.score
+            best_individual = current_best
+        elif not cfg.higher_is_better and current_best.score < best_score:
+            best_score = current_best.score
+            best_individual = current_best
 
-        # Score difference between current new population and previous population
-        if cfg.convergence_metric == "average":
-            score_diff = abs(gen_avg_score - avg_score)
-        else:
-            score_diff = abs(gen_best_score - previous_best_score)
+        # Convergence test: score difference between new populations achieves value below set threshold
+        score_diff = abs(best_score - prev_best_score)
 
-        history.append(GenerationStats(
-            generation=gen,
-            best_score=gen_best_score,
-            average_score=gen_avg_score,
-            eligible_count=len(eligible_parents),
-            score_difference=score_diff
-        ))
+        history.append({
+            "generation": gen,
+            "best_score": best_score,
+            "mean_score": sum(ind.score for ind in current_population) / len(current_population),
+            "score_diff": score_diff
+        })
 
-        if cfg.higher_is_better and gen_best_score > best_score:
-            best_score = gen_best_score
-            best_individual = gen_best_ind
-        elif not cfg.higher_is_better and gen_best_score < best_score:
-            best_score = gen_best_score
-            best_individual = gen_best_ind
-
-        # Check convergence condition
-        if gen >= cfg.min_generations and score_diff <= cfg.convergence_threshold:
+        if score_diff <= cfg.convergence_threshold:
             consecutive_converged += 1
             if consecutive_converged >= cfg.patience:
                 converged = True
                 break
         else:
             consecutive_converged = 0
-
-        # Advance to next iteration
-        previous_best_score = gen_best_score
-        avg_score = gen_avg_score
-        current_population = next_population
 
     return OptimizationResult(
         best_schedule=best_individual.schedule or decode_permutation_to_schedule(
@@ -1485,7 +1522,7 @@ def optimize_schedule(
         best_score=best_score,
         best_individual=best_individual,
         history=history,
-        generations_run=gen,
+        generations_run=generations_run,
         converged=converged,
         config=cfg
     )

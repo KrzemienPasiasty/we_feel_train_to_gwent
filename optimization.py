@@ -23,19 +23,33 @@ from productivity_scoring import (
     integrate_focus_productivity_difference,
     integrate_series_difference,
 )
+from physical_activity import (
+    PhysicalActivityConfig,
+    ScheduledActivity,
+    calculate_activity_conditions_penalty,
+    calculate_air_quality_slot_penalty,
+    calculate_weather_slot_penalty,
+    parse_physical_activities_from_weekly_schedule,
+    parse_physical_activity,
+)
 
 __all__ = [
     "DEFAULT_PRIORITY_MULTIPLIERS",
     "MealConfig",
     "OptimizationConfig",
     "OptimizationResult",
+    "PhysicalActivityConfig",
     "ProductivityCurve",
     "Schedule",
+    "ScheduledActivity",
     "ScheduledMeal",
     "ScheduledTask",
+    "calculate_activity_conditions_penalty",
+    "calculate_air_quality_slot_penalty",
     "calculate_meal_spacing_penalty",
     "calculate_tag_mismatch_penalty",
     "calculate_task_tag_mismatch_overlap",
+    "calculate_weather_slot_penalty",
     "create_focus_productivity_scoring_function",
     "focus_productivity_difference_at_timestamp",
     "get_priority_multiplier",
@@ -44,6 +58,8 @@ __all__ = [
     "mutate_permutation",
     "optimize_schedule",
     "parse_meals_from_weekly_schedule",
+    "parse_physical_activities_from_weekly_schedule",
+    "parse_physical_activity",
     "partially_mixed_crossover",
     "populate_meals_for_schedule",
 ]

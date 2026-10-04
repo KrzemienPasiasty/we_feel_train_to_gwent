@@ -19,6 +19,14 @@ from schedule_optimizer import (
     calculate_task_tag_mismatch_overlap,
     get_priority_multiplier,
 )
+from physical_activity import (
+    PhysicalActivityConfig,
+    ScheduledActivity,
+    calculate_activity_conditions_penalty,
+    calculate_air_quality_slot_penalty,
+    calculate_weather_slot_penalty,
+    parse_physical_activity,
+)
 from task import Task
 
 
@@ -82,7 +90,9 @@ def integrate_focus_productivity_difference(
     meal_spacing_penalty_per_minute: float = 0.5,
     missing_meal_penalty: float = 100.0,
     expected_meals_per_day: int = 3,
-    active_meal_days: Optional[List[int]] = None
+    active_meal_days: Optional[List[int]] = None,
+    penalize_activity_conditions: bool = True,
+    weather_air_forecast: Optional[Any] = None
 ) -> float:
     """
     Calculates the difference between task focus and productivity across all
@@ -92,29 +102,8 @@ def integrate_focus_productivity_difference(
     takes the absolute value. Then, integrates this difference function over time.
     For unassigned tasks, applies penalty points scaled by each task's priority multiplier.
     Optionally includes an exponential penalty for tasks assigned to time slots with
-    alien tags (e.g. sleeping period), and penalty for meal spacing outside limits.
-
-    Parameters:
-      schedule: The Schedule instance containing task and meal assignments.
-      productivity_curve_data: Productivity curve data.
-      positive_constant: Multiplier when task focus exceeds available productivity.
-      time_unit: Unit for integration dt ("hours", "minutes", or "slots").
-      normalize_scales: If True, normalizes task.focus and productivity to [0, 1].
-      max_focus_scale: Scale for normalizing task.focus.
-      max_productivity_scale: Scale for normalizing productivity.
-      penalize_unassigned: If True, adds penalty for unassigned tasks.
-      unassigned_penalty_per_task: Base cost added for each unassigned task.
-      priority_multipliers: Custom mapping of priority to penalty multipliers.
-      penalize_tag_mismatch: If True, adds exponential penalty for tag mismatch.
-      penalize_meal_spacing: If True, adds penalty for meal intervals outside [min, max].
-      min_time_between_meals_minutes: Minimum duration between consecutive meals.
-      max_time_between_meals_minutes: Maximum duration between consecutive meals.
-      meal_spacing_penalty_per_minute: Penalty per minute outside bounds.
-      missing_meal_penalty: Penalty per missing meal.
-      expected_meals_per_day: Target amount of meals per day.
-
-    Returns:
-      The total integrated value plus penalties.
+    alien tags (e.g. sleeping period), penalty for meal spacing outside limits,
+    and penalties for physical activity scheduled in bad weather or bad air quality.
     """
     # Wrap productivity curve
     if isinstance(productivity_curve_data, ProductivityCurve):
@@ -192,6 +181,14 @@ def integrate_focus_productivity_difference(
         )
         total_integral += meal_penalty
 
+    if penalize_activity_conditions and hasattr(schedule, "activities"):
+        for act in schedule.activities:
+            if weather_air_forecast is not None and (act.weather_penalty == 0.0 and act.air_quality_penalty == 0.0):
+                w_pen, aq_pen = calculate_activity_conditions_penalty(act, weather_air_forecast)
+                total_integral += w_pen + aq_pen
+            else:
+                total_integral += (act.weather_penalty + act.air_quality_penalty)
+
     return total_integral
 
 
@@ -254,7 +251,9 @@ def create_focus_productivity_scoring_function(
     meal_spacing_penalty_per_minute: float = 0.5,
     missing_meal_penalty: float = 100.0,
     expected_meals_per_day: int = 3,
-    active_meal_days: Optional[List[int]] = None
+    active_meal_days: Optional[List[int]] = None,
+    penalize_activity_conditions: bool = True,
+    weather_air_forecast: Optional[Any] = None
 ) -> Callable[[Schedule], float]:
     """
     Creates a scoring function compatible with optimize_schedule.
@@ -262,10 +261,10 @@ def create_focus_productivity_scoring_function(
       - Minimizing the integrated difference between task focus and productivity curve.
       - Avoiding leaving high-priority tasks unassigned (priority multiplier scaled).
       - Avoiding assigning tasks during alien tagged periods (e.g. sleeping period).
-      - Optionally keeping meal spacing strictly within [min_time_between_meals, max_time_between_meals],
-        penalizing intervals that are either shorter or longer than set limits.
+      - Respecting meal intervals.
+      - Avoiding physical training during periods of bad weather or poor air quality.
 
-    Score = baseline_score - (penalty_weight * integral) - unassigned_cost - tag_mismatch_cost - meal_spacing_cost
+    Score = baseline_score - (penalty_weight * integral) - unassigned_cost - tag_mismatch_cost - meal_spacing_cost - activity_condition_cost
     """
     def scoring_fn(schedule: Schedule) -> float:
         integral = integrate_focus_productivity_difference(
@@ -276,7 +275,8 @@ def create_focus_productivity_scoring_function(
             normalize_scales=normalize_scales,
             penalize_unassigned=False,
             penalize_tag_mismatch=False,
-            penalize_meal_spacing=False
+            penalize_meal_spacing=False,
+            penalize_activity_conditions=False
         )
 
         unassigned_cost = sum(
@@ -308,7 +308,23 @@ def create_focus_productivity_scoring_function(
                 active_days=active_meal_days
             )
 
-        score = baseline_score - (penalty_weight * integral) - unassigned_cost - tag_mismatch_cost - meal_spacing_cost
+        activity_cost = 0.0
+        if penalize_activity_conditions and hasattr(schedule, "activities"):
+            for act in schedule.activities:
+                if weather_air_forecast is not None and (act.weather_penalty == 0.0 and act.air_quality_penalty == 0.0):
+                    w_pen, aq_pen = calculate_activity_conditions_penalty(act, weather_air_forecast)
+                    activity_cost += w_pen + aq_pen
+                else:
+                    activity_cost += (act.weather_penalty + act.air_quality_penalty)
+
+        score = (
+            baseline_score
+            - (penalty_weight * integral)
+            - unassigned_cost
+            - tag_mismatch_cost
+            - meal_spacing_cost
+            - activity_cost
+        )
         return score
 
     return scoring_fn
