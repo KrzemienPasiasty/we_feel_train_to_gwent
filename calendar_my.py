@@ -2,11 +2,11 @@ import customtkinter as ctk
 from datetime import datetime, time
 from typing import Callable, Optional, List, Any
 
-
-# Zakładamy, że struktury Task, Tag, WeeklySchedule są dostępne w Twoim środowisku
+import datas
 from task import Task
 from tag import Tag
-from week_periods import WeeklySchedule
+from week_periods import WeekTime
+
 
 def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
     """Konwertuje kolor zapisany jako krotka RGB na format HEX."""
@@ -17,23 +17,28 @@ class TaskWidget(ctk.CTkFrame):
     """Komponent reprezentujący pojedynczy obiekt Task na kalendarzu."""
 
     PRIORITY_SYMBOLS = {
-        1: "⚡",  # Zakładając, że 1 to priorytet najwyższy
-        2: "🔴",
-        3: "🟡",
-        4: "🟢"
+        4: "⚡",
+        3: "🔴",
+        2: "🟡",
+        1: "🟢"
     }
 
     def __init__(
             self,
             master,
-            task: Any,  # Obiekt klasy Task
-            command: Optional[Callable[[Any], None]] = None,
+            task: Task,  # Teraz używa nowej struktury z task_2.py[cite: 5]
+            command: Optional[Callable[[Task], None]] = None,
             **kwargs
     ):
-        # Pobieranie koloru z pierwszego przypisanego tagu (jeśli istnieje)
-        category_color = "#1f538d"  # Domyślny kolor
-        if hasattr(task, 'tags') and task.tags:
-            category_color = rgb_to_hex(task.tags[0].color)
+        # Inicjalizacja z kolorowaniem wg. pierwszego tagu, użycie convert_color_to_hex z nowej struktury
+        category_color = "#1f538d"
+        if getattr(task, 'tags', None) and len(task.tags) > 0:  # [cite: 5]
+            first_tag = task.tags[0]  # [cite: 5]
+            # Użycie metody konwersji zawartej bezpośrednio w klasie Tag z tag_2.py
+            if hasattr(first_tag, 'convert_color_to_hex'):  # [cite: 6]
+                category_color = first_tag.convert_color_to_hex(first_tag.color)  # [cite: 6]
+            else:
+                category_color = rgb_to_hex(first_tag.color)  # [cite: 6]
 
         super().__init__(
             master,
@@ -46,14 +51,12 @@ class TaskWidget(ctk.CTkFrame):
         self.task = task
         self.command = command
 
-        # Pobieranie danych bezpośrednio ze struktury Task
-        priority = getattr(task, 'priority', 3)
+        priority = getattr(task, 'priority', 1)  # [cite: 5]
         symbol = self.PRIORITY_SYMBOLS.get(priority, "📌")
-        title = getattr(task, 'description', "Brak opisu")
+        title = getattr(task, 'description', "Brak opisu")  # [cite: 5]
 
         display_text = f"{symbol} {title}"
 
-        # Etykieta tekstu wewnątrz zadania
         self.label = ctk.CTkLabel(
             self,
             text=display_text,
@@ -64,7 +67,6 @@ class TaskWidget(ctk.CTkFrame):
         )
         self.label.pack(fill="both", expand=True, padx=4, pady=2)
 
-        # Eventy naciśnięcia
         self.bind("<Button-1>", self._on_click)
         self.label.bind("<Button-1>", self._on_click)
 
@@ -76,7 +78,7 @@ class TaskWidget(ctk.CTkFrame):
 class CalendarFrame(ctk.CTkFrame):
     """
     Osadzalny widget kalendarza.
-    Przyjmuje gotową listę obiektów Task oraz strukturę WeeklySchedule.
+    Obsługuje widok dzienny (is_weekly_view=False) oraz tygodniowy (is_weekly_view=True).
     """
 
     DAYS_OF_WEEK = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"]
@@ -84,11 +86,11 @@ class CalendarFrame(ctk.CTkFrame):
     def __init__(
             self,
             master,
-            tasks: List[Any],
-            schedule: Any,  # Obiekt klasy WeeklySchedule
+            is_weekly_view: bool = True,  # NOWY PARAMETR: Steruje trybem wyświetlania
+            target_date: Optional[datetime] = None,  # Używane tylko w widoku dziennym
             start_hour: int = 8,
             end_hour: int = 18,
-            command: Optional[Callable[[Any], None]] = None,
+            command: Optional[Callable[[Task], None]] = None,
             **kwargs
     ):
         super().__init__(master, **kwargs)
@@ -96,10 +98,16 @@ class CalendarFrame(ctk.CTkFrame):
         self.start_hour = start_hour
         self.end_hour = end_hour
         self.command = command
+        self.is_weekly_view = is_weekly_view
 
-        # 4 sloty na każdą godzinę
+        # Domyślnie użyj dzisiejszej daty jeśli brakuje
+        self.target_date = target_date if target_date else datetime.now()
+
+        # Ustalenie zakresu iteracji kolumn dni (0-6 dla tygodnia, 1 dla konkretnego dnia)
+        self.days_to_render = list(range(7)) if self.is_weekly_view else [self.target_date.weekday()]
+        self.col_count = len(self.days_to_render)
+
         self.total_intervals = (end_hour - start_hour) * 4
-
         self.task_widgets: List[TaskWidget] = []
 
         self.grid_rowconfigure(1, weight=1)
@@ -108,31 +116,35 @@ class CalendarFrame(ctk.CTkFrame):
         self._build_header()
         self._build_grid()
 
-        # Generowanie UI opartych o dostarczone dane
-        self._render_schedule_hints(schedule)
-        self._render_tasks(tasks)
+        self._render_schedule_hints(datas.weekly_schedule_list[0])
+        self._render_tasks(datas.current_tasks_list)
 
     def _build_header(self):
-        """Tworzy nagłówek z nazwami dni tygodnia."""
+        """Tworzy nagłówek. Dla planu dziennego wypisuje tylko jeden dzień."""
         self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.header_frame.grid(row=0, column=0, sticky="ew", padx=(60, 15), pady=(5, 5))
 
-        for day_idx in range(7):
-            self.header_frame.grid_columnconfigure(day_idx, weight=1)
+        for idx, day_idx in enumerate(self.days_to_render):
+            self.header_frame.grid_columnconfigure(idx, weight=1)
+
+            header_text = self.DAYS_OF_WEEK[day_idx]
+            if not self.is_weekly_view:
+                header_text += f" ({self.target_date.strftime('%d.%m.%Y')})"
+
             lbl = ctk.CTkLabel(
                 self.header_frame,
-                text=self.DAYS_OF_WEEK[day_idx],
+                text=header_text,
                 font=ctk.CTkFont(size=12, weight="bold")
             )
-            lbl.grid(row=0, column=day_idx, sticky="ew", padx=2)
+            lbl.grid(row=0, column=idx, sticky="ew", padx=2)
 
     def _build_grid(self):
-        """Tworzy przewijany obszar 15-minutowej siatki czasowej."""
+        """Tworzy 15-minutową siatkę. Ilość kolumn zależy od is_weekly_view."""
         self.scroll_frame = ctk.CTkScrollableFrame(self)
         self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
 
         self.scroll_frame.grid_columnconfigure(0, minsize=55)
-        for col in range(1, 8):
+        for col in range(1, self.col_count + 1):
             self.scroll_frame.grid_columnconfigure(col, weight=1, minsize=100)
 
         for slot in range(self.total_intervals):
@@ -149,37 +161,40 @@ class CalendarFrame(ctk.CTkFrame):
             )
             time_lbl.grid(row=slot, column=0, sticky="n", pady=1)
 
-            # Tło komórek wierszy
-            for day in range(7):
+            for idx in range(self.col_count):
                 cell_bg = ctk.CTkFrame(
                     self.scroll_frame,
                     fg_color=("gray85", "gray20") if slot % 2 == 0 else ("gray90", "gray17"),
                     height=24,
                     corner_radius=1
                 )
-                cell_bg.grid(row=slot, column=day + 1, sticky="nsew", padx=1, pady=1)
+                cell_bg.grid(row=slot, column=idx + 1, sticky="nsew", padx=1, pady=1)
 
-    def _render_schedule_hints(self, schedule: Any):
-        """
-        Zoptymalizowane podświetlanie przedziałów tagów za pomocą metody intervals_for().
-        Tagi renderują się jako cieniutkie paski z lewej strony, by być tylko podglądem.
-        """
+    def _render_schedule_hints(self, schedule: WeekTime):  # [cite: 4]
+        """Podświetla przypisane tagi, uwzględniając tryb widoku kalendarza."""
         cal_start_min = self.start_hour * 60
         cal_end_min = self.end_hour * 60
 
-        for tag in schedule.tags():
-            color_hex = rgb_to_hex(tag.color)
+        for tag in schedule.tags():  # [cite: 4]
+            # Obsługa nowego formatu koloru
+            if hasattr(tag, 'convert_color_to_hex'):  # [cite: 6]
+                color_hex = tag.convert_color_to_hex(tag.color)  # [cite: 6]
+            else:
+                color_hex = rgb_to_hex(tag.color)  # [cite: 6]
 
-            # Pobieramy mądrze połączone interwały dla tagu z week_periods.py
-            for interval in schedule.intervals_for(tag):
-                start_min = interval.start
-                end_min = interval.end
+            for interval in schedule.intervals_for(tag):  # [cite: 4]
+                # Jeżeli jesteśmy w widoku dziennym i interwał dotyczy innego dnia - pomijamy
+                if not self.is_weekly_view and interval.day != self.target_date.weekday():  # [cite: 4]
+                    continue
 
-                # Jeśli blok wypada całkowicie poza godzinami kalendarza, pomiń
+                # Czas konwertowany wg parametrów week_periods (np. przedział mierzony przesunięciem timedelta)
+                # Wydobycie realnych minut z interwału timedelta
+                start_min = int(interval.start.total_seconds() // 60)  # [cite: 4]
+                end_min = int(interval.end.total_seconds() // 60)  # [cite: 4]
+
                 if end_min <= cal_start_min or start_min >= cal_end_min:
                     continue
 
-                # Ograniczenie rysowania do widoku kalendarza
                 visible_start = max(start_min, cal_start_min)
                 visible_end = min(end_min, cal_end_min)
 
@@ -187,35 +202,42 @@ class CalendarFrame(ctk.CTkFrame):
                 row_end = (visible_end - cal_start_min) // 15
                 row_span = max(1, row_end - row_start)
 
-                # Minimalna ingerencja: wąski, nieinteraktywny marker z lewej krawędzi komórki
+                # Dopasowanie kolumny bazujące na tym, co renderujemy
+                col_index = interval.day + 1 if self.is_weekly_view else 1  # [cite: 4]
+
                 hint_strip = ctk.CTkFrame(
                     self.scroll_frame,
                     fg_color=color_hex,
-                    width=4,  # Wąski pasek
+                    width=6,  # Marker tagu z lewej
                     corner_radius=2
                 )
-                # Używamy sticky="nsw" (North-South-West) by przykleić to pionowo do lewej krawędzi
                 hint_strip.grid(
                     row=row_start,
-                    column=interval.day + 1,
+                    column=col_index,
                     rowspan=row_span,
                     sticky="nsw",
                     padx=(2, 0),
                     pady=1
                 )
 
-    def _render_tasks(self, tasks: List[Any]):
-        """Renderowanie obiektów typu Task."""
+    def _render_tasks(self, tasks: List[Task]):
+        """Wizualizuje poszczególne zadania z task.py"""
         cal_start_min = self.start_hour * 60
 
         for task in tasks:
-            # Zakładam, że algorytm planujący dopina te właściwości do Twojego
-            # obiektu Task na czas wyświetlania w GUI
-            day = getattr(task, 'day', None)
-            start_time = getattr(task, 'start_time', None)
+            # ZMIANA: Używamy assigned_time jako początku przedziału wyświetlania na kalendarzu
+            start_time = getattr(task, 'assigned_time', None)
+            if start_time is None:
+                continue
 
-            if day is None or start_time is None:
-                # Nie da się umiejscowić taska w siatce bez jego pozycji w czasie
+            # Ekstrakcja dnia dla potrzeb ułożenia zadania w odpowiedniej kolumnie
+            try:
+                task_day = start_time.weekday()
+            except AttributeError:
+                continue
+
+            # Filtrowanie przy widoku dziennym
+            if not self.is_weekly_view and task_day != self.target_date.weekday():
                 continue
 
             start_min = start_time.hour * 60 + start_time.minute
@@ -224,15 +246,18 @@ class CalendarFrame(ctk.CTkFrame):
 
             row_start = (start_min - cal_start_min) // 15
 
-            # Obliczanie czasu trwania. Zakładam, że task.time (DateTime) z Twojego
-            # modelu posiada odczytywalne właściwości hour i minute.
+            # ZMIANA: self.time jest ignorowane w kontekście punktu startowego,
+            # a używane wyłącznie do określenia liczby zajmowanych przedziałów (czasu trwania)
             task_req_time = getattr(task, 'time', None)
-            if task_req_time:
-                duration_minutes = (getattr(task_req_time, 'hour', 0) * 60) + getattr(task_req_time, 'minute', 15)
+            if isinstance(task_req_time, datetime):
+                duration_minutes = (task_req_time.hour * 60) + task_req_time.minute
+            elif isinstance(task_req_time, time):
+                duration_minutes = (task_req_time.hour * 60) + task_req_time.minute
             else:
                 duration_minutes = 15
 
             row_span = max(1, duration_minutes // 15)
+            col_index = task_day + 1 if self.is_weekly_view else 1
 
             widget = TaskWidget(
                 master=self.scroll_frame,
@@ -240,65 +265,12 @@ class CalendarFrame(ctk.CTkFrame):
                 command=self.command
             )
 
-            # Kluczowe dla wyglądu: padx=(10, 2) robi margines po lewej stronie taska,
-            # dzięki czemu kolorowy "hint" tagów (o szerokości 4px) nie jest przez zadanie zasłonięty.
             widget.grid(
                 row=row_start,
-                column=day + 1,
+                column=col_index,
                 rowspan=row_span,
                 sticky="nsew",
-                padx=(10, 2),
+                padx=(12, 2),  # Margines by nie zasłonić hint_strip od Tagu
                 pady=1
             )
             self.task_widgets.append(widget)
-
-
-# ==========================================
-# Przykład użycia aplikacji z poziomu CTk
-# ==========================================
-
-
-    # Przykładowe dane z backendu
-    sample_tasks = [
-        {
-            "id": 101,
-            "title": "Daily Standup",
-            "day": 0,  # Poniedziałek
-            "start_time": time(8, 30),
-            "duration_minutes": 30,
-            "color": "#1E88E5",
-            "priority": "HIGH"
-        },
-        {
-            "id": 102,
-            "title": "Code Review",
-            "day": 1,  # Wtorek
-            "start_time": time(10, 0),
-            "duration_minutes": 45,
-            "color": "#D81B60",
-            "priority": "CRITICAL"
-        },
-        {
-            "id": 103,
-            "title": "Planowanie Sprintu",
-            "day": 2,  # Środa
-            "start_time": time(11, 15),
-            "duration_minutes": 60,
-            "color": "#43A047",
-            "priority": "MEDIUM"
-        },
-        {
-            "id": 104,
-            "title": "Dokumentacja",
-            "day": 4,  # Piątek
-            "start_time": time(14, 0),
-            "duration_minutes": 90,
-            "color": "#FB8C00",
-            "priority": "LOW"
-        }
-    ]
-
-    # Załadowanie zadań
-    # calendar.set_tasks(sample_tasks, )
-    #
-    # root.mainloop()
