@@ -1,0 +1,26 @@
+[
+{
+"id": 1,
+"title": "Praca",
+"color": [219, 68, 55],
+"is_interactive": true
+},
+{
+"id": 2,
+"title": "Dom",
+"color": [15, 157, 88],
+"is_interactive": true
+},
+{
+"id": 3,
+"title": "Ważne",
+"color": [244, 180, 0],
+"is_interactive": false
+},
+{
+"id": 4,
+"title": "Stary Projekt 2025",
+"color": [100, 100, 100],
+"is_interactive": false
+}
+]
