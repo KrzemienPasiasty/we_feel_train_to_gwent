@@ -1,5 +1,8 @@
+from __future__ import annotations
 from datetime import datetime
-from typing import List, Optional
+from typing import Callable, List, Optional
+import threading
+
 from tag import Tag
 
 
@@ -7,11 +10,11 @@ class Task:
     def __init__(self):        
         self.id: int = 0
         self.description: str = ""
-        self.start: DateTime
-        self.deadline: Optional[datetime] = None
-        self.time: Optional[datetime] = None
+        self.start: Optional[datetime] = None
+        self.deadline: Optional[datetime | str] = None
+        self.time: Optional[datetime | str] = None
         """ required time to spend at task"""
-        self.focus: float | int
+        self.focus: float | int = 5
         self.priority: int = 1
         self.tags: List[Tag] = []
 
@@ -29,26 +32,15 @@ class Task:
         )
 
 
-
-
-
-
-
 import customtkinter as ctk
-import threading
-from datetime import datetime
-from xmlrpc.client import DateTime
-
-# Importy klas z innych plików według wymagań
-from task import Task
-from tag import Tag
 import datas
 
 
 class TaskFrame(ctk.CTkFrame):
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, on_task_added: Optional[Callable[[Task], None]] = None, **kwargs):
         super().__init__(master, **kwargs)
 
+        self.on_task_added = on_task_added
         self.available_tags = datas.tags_list
         self.autofill_callback = datas.fill_task
         self.selected_tags = []
@@ -56,11 +48,15 @@ class TaskFrame(ctk.CTkFrame):
 
         # --- Nagłówek ---
         self.title_label = ctk.CTkLabel(self, text="Utwórz nowe zadanie", font=ctk.CTkFont(size=20, weight="bold"))
-        self.title_label.pack(pady=(10, 20))
+        self.title_label.pack(pady=(10, 15))
 
         # --- Przycisk Autofill ---
         self.autofill_btn = ctk.CTkButton(self, text="Uzupełnij formularz przez AI", command=self._start_autofill)
         self.autofill_btn.pack(pady=(0, 15), fill="x", padx=20)
+
+        # --- Status / Informacja zwrotna ---
+        self.status_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=12))
+        self.status_label.pack(pady=(0, 5))
 
         # --- Pola formularza ---
 
@@ -155,7 +151,7 @@ class TaskFrame(ctk.CTkFrame):
         # --- Przycisk Dodawania Zadania ---
         self.add_task_btn = ctk.CTkButton(self, text="Dodaj zadanie (Add Task)", fg_color="green",
                                           hover_color="darkgreen", command=self._submit_task)
-        self.add_task_btn.pack(pady=20, fill="x", padx=20)
+        self.add_task_btn.pack(pady=(10, 20), fill="x", padx=20)
 
     def _toggle_focus_slider(self):
         if self.focus_auto_cb.get() == 1:
@@ -164,6 +160,7 @@ class TaskFrame(ctk.CTkFrame):
             self.focus_slider.configure(state="normal")
 
     def _create_tag_buttons(self):
+        self.available_tags = datas.tags_list
         for tag in self.available_tags:
             btn = ctk.CTkButton(
                 self.tags_frame,
@@ -179,7 +176,9 @@ class TaskFrame(ctk.CTkFrame):
         return f'#{rgb_tuple[0]:02x}{rgb_tuple[1]:02x}{rgb_tuple[2]:02x}'
 
     def _toggle_tag(self, tag: Tag):
-        button = self.tag_buttons[tag]
+        button = self.tag_buttons.get(tag)
+        if not button:
+            return
         if tag in self.selected_tags:
             self.selected_tags.remove(tag)
             button.configure(fg_color="gray")
@@ -253,10 +252,20 @@ class TaskFrame(ctk.CTkFrame):
         minute = self.deadline_minute.get()
 
         new_task.deadline = f"{year}-{month}-{day}T{hour}:{minute}:00"
-        new_task.tags = self.selected_tags
+        new_task.tags = list(self.selected_tags)
+
+        # Generowanie unikalnego ID
+        existing_ids = [t.id for t in datas.current_tasks_list if hasattr(t, "id") and isinstance(t.id, int)]
+        new_task.id = (max(existing_ids) + 1) if existing_ids else 1
 
         # Wywołanie funkcji z datas.py
         datas.add_task(new_task, autofill_focus, autofill_time)
+
+        self.status_label.configure(text="✓ Zadanie zostało pomyślnie dodane!", text_color="#4caf50")
+        self.after(3500, lambda: self.status_label.configure(text=""))
+
+        if self.on_task_added:
+            self.on_task_added(new_task)
 
         self._clear_form()
 

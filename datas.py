@@ -62,12 +62,21 @@ def _decode_task_value(value):
     return value
 
 
-def _tag_to_dict(tag: Tag) -> dict:
+def _tag_to_dict(tag) -> dict:
+    if isinstance(tag, Tag):
+        return {
+            "id": tag.id,
+            "title": tag.title,
+            "color": list(tag.color) if hasattr(tag, "color") else [100, 100, 100],
+            "is_interactive": tag.is_interactive if hasattr(tag, "is_interactive") else True,
+        }
+    if isinstance(tag, dict):
+        return tag
     return {
-        "id": tag.id,
-        "title": tag.title,
-        "color": list(tag.color),
-        "is_interactive": tag.is_interactive,
+        "id": 0,
+        "title": str(tag),
+        "color": [100, 100, 100],
+        "is_interactive": True,
     }
 
 
@@ -75,11 +84,17 @@ def _tag_from_dict(tag_data: dict) -> Tag:
     if not isinstance(tag_data, dict):
         raise ValueError("Each tag in a JSON list must be an object")
 
+    color_val = tag_data.get("color", (100, 100, 100))
+    if isinstance(color_val, (list, tuple)):
+        color_tuple = tuple(color_val)
+    else:
+        color_tuple = (100, 100, 100)
+
     return Tag(
-        id=tag_data["id"],
-        title=tag_data["title"],
-        color=tuple(tag_data["color"]),
-        is_interactive=tag_data["is_interactive"],
+        id=tag_data.get("id", 0),
+        title=tag_data.get("title", tag_data.get("name", "")),
+        color=color_tuple,
+        is_interactive=tag_data.get("is_interactive", True),
     )
 
 
@@ -114,9 +129,9 @@ def _task_from_dict(task_data: dict) -> Task:
 
 def _weekly_schedule_to_dict(schedule: WeeklySchedule) -> dict:
     return {
-        "slots": [
-            [[_tag_to_dict(tag) for tag in slot] for slot in day]
-            for day in schedule._slots
+        "slots": [\
+            [[_tag_to_dict(tag) for tag in slot] for slot in day]\
+            for day in schedule._slots\
         ]
     }
 
@@ -147,29 +162,29 @@ def _weekly_schedule_from_dict(schedule_data: dict) -> WeeklySchedule:
     return schedule
 
 
-def save_current_tasks_list_to_json(tasks: list[Task], file_path: str) -> None:
+def save_current_tasks_list_to_json(tasks: list[Task], file_path: str = "current_tasks.json") -> None:
     _save_list_to_json(tasks, file_path, _task_to_dict)
 
 
 def load_current_tasks_list_from_json(
-    tasks: list[Task], file_path: str
+    tasks: list[Task], file_path: str = "current_tasks.json"
 ) -> list[Task]:
     return _load_list_from_json(tasks, file_path, _task_from_dict)
 
 
-def save_done_tasks_list_to_json(tasks: list[Task], file_path: str) -> None:
+def save_done_tasks_list_to_json(tasks: list[Task], file_path: str = "tasks_archived.json") -> None:
     _save_list_to_json(tasks, file_path, _task_to_dict)
 
 
-def load_done_tasks_list_from_json(tasks: list[Task], file_path: str) -> list[Task]:
+def load_done_tasks_list_from_json(tasks: list[Task], file_path: str = "tasks_archived.json") -> list[Task]:
     return _load_list_from_json(tasks, file_path, _task_from_dict)
 
 
-def save_tags_list_to_json(tags: list[Tag], file_path: str) -> None:
+def save_tags_list_to_json(tags: list[Tag], file_path: str = "tags.json") -> None:
     _save_list_to_json(tags, file_path, _tag_to_dict)
 
 
-def load_tags_list_from_json(tags: list[Tag], file_path: str) -> list[Tag]:
+def load_tags_list_from_json(tags: list[Tag], file_path: str = "tags.json") -> list[Tag]:
     return _load_list_from_json(tags, file_path, _tag_from_dict)
 
 
@@ -197,11 +212,34 @@ def load_past_weekly_schedule_list_from_json(
     return _load_list_from_json(schedules, file_path, _weekly_schedule_from_dict)
 
 
-def add_task(task: Task, autofill_focus, autofill_time):
+def add_task(task: Task, autofill_focus=False, autofill_time=False):
     if autofill_focus or autofill_time:
         task = fill_task(task, autofill_focus, autofill_time)
     current_tasks_list.append(task)
     save_current_tasks_list_to_json(current_tasks_list, "current_tasks.json")
+
+
+def delete_task(task: Task) -> bool:
+    if task in current_tasks_list:
+        current_tasks_list.remove(task)
+        save_current_tasks_list_to_json(current_tasks_list, "current_tasks.json")
+        return True
+    return False
+
+
+def complete_task(task: Task) -> bool:
+    if task in current_tasks_list:
+        current_tasks_list.remove(task)
+        done_tasks_list.append(task)
+        save_current_tasks_list_to_json(current_tasks_list, "current_tasks.json")
+        save_done_tasks_list_to_json(done_tasks_list, "tasks_archived.json")
+        return True
+    return False
+
+
+def reload_current_tasks() -> list[Task]:
+    load_current_tasks_list_from_json(current_tasks_list, "current_tasks.json")
+    return current_tasks_list
 
 
 def load_tasks_from_json(json_filepath: str) -> list[Task]:
@@ -222,3 +260,15 @@ def fill_task(task: Task, autofill_focus, autofill_time) -> Task:
     from llm import process_tasks_file
 
     return process_tasks_file(task, autofill_focus, autofill_time)
+
+
+# Initialize default lists from disk
+try:
+    load_current_tasks_list_from_json(current_tasks_list, "current_tasks.json")
+except Exception:
+    pass
+
+try:
+    load_tags_list_from_json(tags_list, "tags.json")
+except Exception:
+    pass
