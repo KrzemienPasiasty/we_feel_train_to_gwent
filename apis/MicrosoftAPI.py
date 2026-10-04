@@ -1,12 +1,29 @@
+import os
+import sys
+import json
+from typing import Optional
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UNIFIED_CREDENTIALS_FILE = os.path.join(BASE_DIR, "api_credentials.json")
-CREDENTIALS_FILE = os.path.join(BASE_DIR, "microsoft_credentials.json")
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+
+def _resolve_file(filename: str) -> str:
+    root_path = os.path.join(PROJECT_ROOT, filename)
+    if os.path.exists(root_path):
+        return root_path
+    return os.path.join(BASE_DIR, filename)
+
+
+UNIFIED_CREDENTIALS_FILE = _resolve_file("api_credentials.json")
+CREDENTIALS_FILE = _resolve_file("microsoft_credentials.json")
 
 
 def _get_token_path(user_id: Optional[str] = None) -> str:
     """Returns the token cache file path for a specific user or default."""
     filename = f"ms_token_{user_id}.json" if user_id else "ms_token.json"
-    return os.path.join(BASE_DIR, filename)
+    return _resolve_file(filename)
 
 
 def get_client_id(credentials_path: Optional[str] = None) -> str:

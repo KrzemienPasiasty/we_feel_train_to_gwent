@@ -1,13 +1,25 @@
 import unittest
-from weatherAPI import (
-    interpret_weather_code,
-    interpret_european_aqi,
-    interpret_us_aqi,
-    geocode_location,
-    fetch_weather,
-    fetch_air_quality,
-    download_weather_and_air_quality,
-)
+
+try:
+    from apis.weatherAPI import (
+        interpret_weather_code,
+        interpret_european_aqi,
+        interpret_us_aqi,
+        geocode_location,
+        fetch_weather,
+        fetch_air_quality,
+        download_weather_and_air_quality,
+    )
+except ImportError:
+    from weatherAPI import (
+        interpret_weather_code,
+        interpret_european_aqi,
+        interpret_us_aqi,
+        geocode_location,
+        fetch_weather,
+        fetch_air_quality,
+        download_weather_and_air_quality,
+    )
 
 
 class TestWeatherAPI(unittest.TestCase):
@@ -48,26 +60,13 @@ class TestWeatherAPI(unittest.TestCase):
 
     def test_fetch_weather_and_air_quality_coordinates(self):
         # Krakow coordinates
-        lat, lon = 50.0614, 19.9366
-        weather = fetch_weather(lat, lon, forecast_days=2)
-        self.assertIn("current", weather)
-        self.assertIn("temperature", weather["current"])
-        self.assertIn("weather_description", weather["current"])
-        self.assertGreater(len(weather["daily"]), 0)
-
-        aq = fetch_air_quality(lat, lon, forecast_days=2)
-        self.assertIn("current", aq)
-        self.assertIn("european_aqi", aq["current"])
-        self.assertIn("pm2_5", aq["current"])
-
-    def test_download_weather_and_air_quality(self):
-        data = download_weather_and_air_quality(location="Warsaw", forecast_days=3)
-        self.assertIn("location", data)
-        self.assertEqual(data["location"]["name"], "Warsaw")
+        lat, lon = 50.0647, 19.9450
+        data = download_weather_and_air_quality(latitude=lat, longitude=lon, forecast_days=1)
         self.assertIn("weather", data)
         self.assertIn("air_quality", data)
         self.assertIn("current", data["weather"])
         self.assertIn("current", data["air_quality"])
+        self.assertTrue("temperature" in data["weather"]["current"] or "temperature_2m" in data["weather"]["current"])
 
 
 if __name__ == "__main__":

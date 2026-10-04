@@ -1,11 +1,8 @@
 import json
 import customtkinter as ctk
 
-from calendar_my import CalendarFrame
-from task import Task, TaskFrame
-from task_list import TaskListFrame
-from tag import Tag
-from week_periods import WeekTime
+from ui import CalendarFrame, TaskListFrame, TaskFrame
+from models import Task, Tag, WeekTime
 import datas
 
 
