@@ -1,81 +1,345 @@
+import os
 import json
-from xmlrpc.client import DateTime
-from tag import Tag # Zakładamy, że ten plik (tag.py) istnieje obok
+from datetime import date, datetime, time as time_value
+from typing import Any
 
-from task import Task # Zakładamy, że ten plik (task.py) istnieje obok
-from llm import process_tasks_file
-from task_lifecycle import persist_new_task
-
-current_tasks_list = []
-done_tasks_list = []
-tags_list = []
-weeklySheadule_list = []
-past_weeklySheadule_list = []
+from tag import Tag
+from task import Task
+from week_periods import WeeklySchedule
 
 
-def save_list_to_json(data_list, file_path):
+current_tasks_list: list[Task] = []
+done_tasks_list: list[Task] = []
+tags_list: list[Tag] = []
+weekly_schedule_list: list[WeeklySchedule] = []
+past_weekly_schedule_list: list[WeeklySchedule] = []
+
+
+def _save_list_to_json(data_list: list, file_path: str, serializer) -> None:
+    if isinstance(data_list, (str, os.PathLike)) and isinstance(file_path, list):
+        data_list, file_path = file_path, str(data_list)
     with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(data_list, file, ensure_ascii=False, indent=4)
+        json.dump(
+            [serializer(item) for item in data_list],
+            file,
+            ensure_ascii=False,
+            indent=4,
+        )
 
 
-def read_list_from_json(data_list, file_path):
+def _load_list_from_json(target_list: list, file_path: str, deserializer) -> list:
+    if isinstance(target_list, (str, os.PathLike)) and isinstance(file_path, list):
+        target_list, file_path = file_path, str(target_list)
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             loaded_data = json.load(file)
     except FileNotFoundError:
-        return data_list
+        return target_list
 
     if not isinstance(loaded_data, list):
         raise ValueError(f"Expected a JSON list in {file_path}")
 
-    data_list.clear()
-    data_list.extend(loaded_data)
-    return data_list
+    target_list[:] = [deserializer(item) for item in loaded_data]
+    return target_list
 
 
-def add_task(task: Task, autofill_focus, autofill_time):
-    if autofill_focus or autofill_time:
-        print("AAAAAAAA")
-        task = fill_task(task,  autofill_focus, autofill_time)
-    print("BBBBBBBBBBBBBb")
-    persist_new_task(task)
-    current_tasks_list.append(task)
+def _encode_task_value(value):
+    if isinstance(value, datetime):
+        return {"__serialized_type__": "datetime", "value": value.isoformat()}
+    if isinstance(value, date):
+        return {"__serialized_type__": "date", "value": value.isoformat()}
+    if isinstance(value, time_value):
+        return {"__serialized_type__": "time", "value": value.isoformat()}
+    return value
+
+
+def _decode_task_value(value):
+    if value is None:
+        return None
+
+    if isinstance(value, dict) and "__serialized_type__" in value:
+        serialized_type = value["__serialized_type__"]
+        serialized_value = value.get("value")
+        if serialized_value is None:
+            return None
+        if serialized_type == "datetime":
+            return datetime.fromisoformat(serialized_value)
+        if serialized_type == "date":
+            return date.fromisoformat(serialized_value)
+        if serialized_type == "time":
+            return time_value.fromisoformat(serialized_value)
+        return serialized_value
+
+    if isinstance(value, str):
+        s = value.strip()
+        if not s:
+            return None
+        for fmt in (
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M",
+            "%Y-%m-%d %H:%M",
+            "%Y-%m-%d",
+        ):
+            try:
+                return datetime.strptime(s, fmt)
+            except Exception:
+                pass
+        for t_fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                return datetime.strptime(s, t_fmt).time()
+            except Exception:
+                pass
+        return value
+
+    return value
+
+
+def _tag_to_dict(tag) -> dict:
+    if isinstance(tag, Tag):
+        return {
+            "id": tag.id,
+            "title": tag.title,
+            "color": list(tag.color) if hasattr(tag, "color") and isinstance(tag.color, (list, tuple)) else [100, 100, 100],
+            "is_interactive": tag.is_interactive if hasattr(tag, "is_interactive") else True,
+        }
+    if isinstance(tag, dict):
+        return tag
+    return {
+        "id": 0,
+        "title": str(tag),
+        "color": [100, 100, 100],
+        "is_interactive": True,
+    }
+
+
+def _tag_from_dict(tag_data: Any) -> Tag:
+    if isinstance(tag_data, Tag):
+        return tag_data
+
+    if isinstance(tag_data, str):
+        tag_str = tag_data.strip()
+        for known in tags_list:
+            if known.title.strip().lower() == tag_str.lower():
+                return known
+        return Tag(
+            id=0,
+            title=tag_str,
+            color=(100, 100, 100),
+            is_interactive=True,
+        )
+
+    if not isinstance(tag_data, dict):
+        return Tag(
+            id=0,
+            title=str(tag_data),
+            color=(100, 100, 100),
+            is_interactive=True,
+        )
+
+    color_val = tag_data.get("color", (100, 100, 100))
+    if isinstance(color_val, (list, tuple)):
+        color_tuple = tuple(color_val)
+    else:
+        color_tuple = (100, 100, 100)
+
+    title = tag_data.get("title", tag_data.get("name", ""))
+    for known in tags_list:
+        if known.title.strip().lower() == str(title).strip().lower():
+            return known
+
+    return Tag(
+        id=tag_data.get("id", 0),
+        title=title,
+        color=color_tuple,
+        is_interactive=tag_data.get("is_interactive", True),
+    )
+
+
+def _task_to_dict(task: Task) -> dict:
+    return {
+        "id": getattr(task, "id", 0),
+        "description": getattr(task, "description", ""),
+        "start": _encode_task_value(getattr(task, "start", None)),
+        "assigned_time": _encode_task_value(getattr(task, "assigned_time", None)),
+        "deadline": _encode_task_value(getattr(task, "deadline", None)),
+        "time": _encode_task_value(getattr(task, "time", None)),
+        "focus": getattr(task, "focus", None),
+        "priority": getattr(task, "priority", 1),
+        "tags": [_tag_to_dict(tag) for tag in (getattr(task, "tags", None) or [])],
+    }
+
+
+def _task_from_dict(task_data: dict) -> Task:
+    if not isinstance(task_data, dict):
+        raise ValueError("Each task in a JSON list must be an object")
+
+    task = Task()
+    task.id = task_data.get("id", task.id)
+    task.description = task_data.get("description", task.description)
+    task.start = _decode_task_value(task_data.get("start"))
+    task.assigned_time = _decode_task_value(task_data.get("assigned_time"))
+    task.deadline = _decode_task_value(task_data.get("deadline"))
+    task.time = _decode_task_value(task_data.get("time"))
+    task.focus = task_data.get("focus")
+    task.priority = task_data.get("priority", task.priority)
+    raw_tags = task_data.get("tags") or []
+    task.tags = [_tag_from_dict(tag) for tag in raw_tags]
     return task
+
+
+def _weekly_schedule_to_dict(schedule: WeeklySchedule) -> dict:
+    return {
+        "slots": [
+            [[_tag_to_dict(tag) for tag in slot] for slot in day]
+            for day in schedule._slots
+        ]
+    }
+
+
+def _weekly_schedule_from_dict(schedule_data: dict) -> WeeklySchedule:
+    if not isinstance(schedule_data, dict) or not isinstance(
+        schedule_data.get("slots"), list
+    ):
+        raise ValueError("Each weekly schedule in a JSON list must contain slots")
+
+    schedule = WeeklySchedule()
+    slots_data = schedule_data["slots"]
+    if len(slots_data) != len(schedule._slots):
+        raise ValueError("A weekly schedule must contain seven days")
+
+    restored_slots = []
+    for day_data, empty_day in zip(slots_data, schedule._slots):
+        if not isinstance(day_data, list) or len(day_data) != len(empty_day):
+            raise ValueError("Each day in a weekly schedule must contain 96 slots")
+        restored_day = []
+        for slot_data in day_data:
+            if not isinstance(slot_data, list):
+                raise ValueError("Each slot must contain a list of tags")
+            restored_day.append([_tag_from_dict(tag) for tag in slot_data])
+        restored_slots.append(restored_day)
+
+    schedule._slots = restored_slots
+    return schedule
+
+
+def save_current_tasks_list_to_json(tasks: list[Task], file_path: str = "current_tasks.json") -> None:
+    _save_list_to_json(tasks, file_path, _task_to_dict)
+
+
+def load_current_tasks_list_from_json(
+    tasks: list[Task], file_path: str = "current_tasks.json"
+) -> list[Task]:
+    return _load_list_from_json(tasks, file_path, _task_from_dict)
+
+
+def save_done_tasks_list_to_json(tasks: list[Task], file_path: str = "tasks_archived.json") -> None:
+    _save_list_to_json(tasks, file_path, _task_to_dict)
+
+
+def load_done_tasks_list_from_json(tasks: list[Task], file_path: str = "tasks_archived.json") -> list[Task]:
+    return _load_list_from_json(tasks, file_path, _task_from_dict)
+
+
+def save_tags_list_to_json(tags: list[Tag], file_path: str = "tags.json") -> None:
+    _save_list_to_json(tags, file_path, _tag_to_dict)
+
+
+def load_tags_list_from_json(tags: list[Tag], file_path: str = "tags.json") -> list[Tag]:
+    return _load_list_from_json(tags, file_path, _tag_from_dict)
+
+
+def save_weekly_schedule_list_to_json(
+    schedules: list[WeeklySchedule], file_path: str
+) -> None:
+    _save_list_to_json(schedules, file_path, _weekly_schedule_to_dict)
+
+
+def load_weekly_schedule_list_from_json(
+    schedules: list[WeeklySchedule], file_path: str
+) -> list[WeeklySchedule]:
+    return _load_list_from_json(schedules, file_path, _weekly_schedule_from_dict)
+
+
+def save_past_weekly_schedule_list_to_json(
+    schedules: list[WeeklySchedule], file_path: str
+) -> None:
+    _save_list_to_json(schedules, file_path, _weekly_schedule_to_dict)
+
+
+def load_past_weekly_schedule_list_from_json(
+    schedules: list[WeeklySchedule], file_path: str
+) -> list[WeeklySchedule]:
+    return _load_list_from_json(schedules, file_path, _weekly_schedule_from_dict)
+
+
+def add_task(task: Task, autofill_focus=False, autofill_time=False):
+    if autofill_focus or autofill_time:
+        task = fill_task(task, autofill_focus, autofill_time)
+    current_tasks_list.append(task)
+    save_current_tasks_list_to_json(current_tasks_list, "current_tasks.json")
+
+
+def delete_task(task: Task) -> bool:
+    if task in current_tasks_list:
+        current_tasks_list.remove(task)
+        save_current_tasks_list_to_json(current_tasks_list, "current_tasks.json")
+        return True
+    return False
+
+
+def complete_task(task: Task) -> bool:
+    if task in current_tasks_list:
+        current_tasks_list.remove(task)
+        done_tasks_list.append(task)
+        save_current_tasks_list_to_json(current_tasks_list, "current_tasks.json")
+        save_done_tasks_list_to_json(done_tasks_list, "tasks_archived.json")
+        return True
+    return False
+
+
+def reload_current_tasks() -> list[Task]:
+    load_current_tasks_list_from_json(current_tasks_list, "current_tasks.json")
+    return current_tasks_list
 
 
 def load_tasks_from_json(json_filepath: str) -> list[Task]:
-    """
-    Otwiera plik wynikowy JSON z LLM, tworzy puste obiekty Task i je wypełnia.
-    """
-    with open(json_filepath, 'r', encoding='utf-8') as f:
-        all_tasks_data = json.load(f)
+    """Read tasks from an LLM-generated JSON file and fill each task."""
+    with open(json_filepath, "r", encoding="utf-8") as file:
+        all_tasks_data = json.load(file)
 
     filled_tasks = []
-
     for item in all_tasks_data:
-        # 1. Tworzymy "niezapełniony" obiekt
         task_instance = Task()
-
-        # 2. Wypełniamy obiekt naszą funkcją
-        filled_task = fill_task(task_instance, item)
-
-        # 3. Dodajemy do gotowej listy
-        filled_tasks.append(filled_task)
+        filled_tasks.append(fill_task(task_instance, item))
 
     return filled_tasks
 
-# ========================================================================
-# NOWA FUNKCJA: KOMPLETNY PROCES (ZAPIS -> CALL LLM.PY -> ODCZYT DO RAM)
-# ========================================================================
-def fill_task(task: Task, autofill_focus, autofill_time) -> Task:
-    """
-    Automatyzuje cały proces: zapis do pliku, call AI, odczyt i mapowanie.
-    """
 
-    print("2. Uruchamiam sztuczną inteligencję (llm.py)...")
-    # Callujemy Twoją funkcję z pliku llm.py
-    task = process_tasks_file(task, autofill_focus, autofill_time )
+def fill_task(task: Task = None, autofill_focus: bool = True, autofill_time: bool = True) -> Task:
+    """Fill missing task fields using the LLM integration."""
+    if task is None:
+        task = Task()
 
-    print("datas.py 88 działa")
-    print(task)
+    if isinstance(autofill_focus, dict):
+        autofill_data = autofill_focus
+        task.description = autofill_data.get("description", task.description)
+        task.time = autofill_data.get("time", task.time)
+        task.focus = autofill_data.get("focus", task.focus)
+        task.priority = autofill_data.get("priority", task.priority)
+        task.tags = [_tag_from_dict(t) for t in autofill_data.get("tags", [])]
+        return task
+
+    import api.autofill_ai as autofill_ai
+
+    output = autofill_ai.autofill(task.description)
+    if "time" in output and autofill_time:
+        task.time = output["time"]
+    if "focus" in output and autofill_focus:
+        task.focus = output["focus"]
     return task
+
+
+if __name__ == "__main__":
+    load_current_tasks_list_from_json(current_tasks_list, "current_tasks.json")
+    print(current_tasks_list)

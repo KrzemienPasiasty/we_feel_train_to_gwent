@@ -1,6 +1,4 @@
-
-
-
-
-class Preferences:
-    def __init__(self):
+"""
+Backward compatibility module: re-exports from models.preferences.
+"""
+from models.preferences import *
