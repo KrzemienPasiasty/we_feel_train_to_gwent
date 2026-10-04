@@ -1,4 +1,6 @@
 customtkinter
+Pillow
+resvg-py
 google-api-python-client
 google-auth-oauthlib
 msal

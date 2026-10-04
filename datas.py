@@ -4,6 +4,7 @@ from tag import Tag # Zakładamy, że ten plik (tag.py) istnieje obok
 
 from task import Task # Zakładamy, że ten plik (task.py) istnieje obok
 from llm import process_tasks_file
+from task_lifecycle import persist_new_task
 
 current_tasks_list = []
 done_tasks_list = []
@@ -37,7 +38,9 @@ def add_task(task: Task, autofill_focus, autofill_time):
         print("AAAAAAAA")
         task = fill_task(task,  autofill_focus, autofill_time)
     print("BBBBBBBBBBBBBb")
+    persist_new_task(task)
     current_tasks_list.append(task)
+    return task
 
 
 def load_tasks_from_json(json_filepath: str) -> list[Task]:

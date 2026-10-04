@@ -14,6 +14,7 @@ from tag import Tag
 
 BASE_DIR = Path(__file__).resolve().parent
 TASKS_FILE = BASE_DIR / "tasks_active.json"
+ARCHIVED_TASKS_FILE = BASE_DIR / "tasks_archived.json"
 TAGS_FILE = BASE_DIR / "tags.json"
 SETTINGS_FILE = BASE_DIR / ".sync_settings.json"
 
@@ -38,6 +39,7 @@ def _validate_google_credentials(credentials):
 
 def merge_downloaded_tasks(downloaded_tasks, tasks_path=TASKS_FILE, tags_path=TAGS_FILE):
     task_records = _read_json_list(Path(tasks_path))
+    archived_records = _read_json_list(ARCHIVED_TASKS_FILE)
     tag_records = _read_json_list(Path(tags_path))
 
     tags_by_title = {}
@@ -55,11 +57,14 @@ def merge_downloaded_tasks(downloaded_tasks, tasks_path=TASKS_FILE, tags_path=TA
             record.get("is_interactive", False),
         )
 
-    max_task_id = max((int(record.get("id", 0)) for record in task_records), default=0)
+    max_task_id = max(
+        (int(record.get("id", 0)) for record in task_records + archived_records),
+        default=0,
+    )
     max_tag_id = max((int(record.get("id", 0)) for record in tag_records), default=0)
     existing_imports = {
         (str(record.get("source")), str(record.get("external_id")))
-        for record in task_records
+        for record in task_records + archived_records
         if record.get("source") and record.get("external_id")
     }
 
@@ -114,6 +119,7 @@ def merge_downloaded_tasks(downloaded_tasks, tasks_path=TASKS_FILE, tags_path=TA
             "llm_metadata": getattr(task, "llm_metadata", ""),
             "source": source,
             "external_id": str(external_id) if external_id else None,
+            "status": "not_started",
         })
         if import_key:
             existing_imports.add(import_key)
@@ -135,8 +141,9 @@ def _json_value(value):
 
 
 class SyncFrame(ctk.CTkFrame):
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, on_data_changed=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.on_data_changed = on_data_changed
 
         self.title_label = ctk.CTkLabel(self, text="Integracje i Import", font=ctk.CTkFont(size=20, weight="bold"))
         self.title_label.pack(pady=(10, 12))
@@ -297,6 +304,8 @@ class SyncFrame(ctk.CTkFrame):
             if duplicate_count:
                 message += f" Pominięto {duplicate_count} już zaimportowanych."
             self.status_label.configure(text=message, text_color="green")
+            if self.on_data_changed:
+                self.on_data_changed()
         except Exception as error:
             self._show_error(str(error))
             return

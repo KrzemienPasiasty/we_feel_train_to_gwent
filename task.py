@@ -48,8 +48,9 @@ import datas
 
 
 class TaskFrame(ctk.CTkFrame):
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, on_task_added=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.on_task_added = on_task_added
 
         self.available_tags = datas.tags_list
         self.autofill_callback = datas.fill_task
@@ -157,6 +158,8 @@ class TaskFrame(ctk.CTkFrame):
         # --- Przycisk Dodawania Zadania ---
         self.add_task_btn = ctk.CTkButton(self, text="Dodaj zadanie (Add Task)", fg_color="green",
                                           hover_color="darkgreen", command=self._submit_task)
+        self.submit_status = ctk.CTkLabel(self, text="", anchor="w", wraplength=700)
+        self.submit_status.pack(fill="x", padx=20, pady=(0, 4))
         self.add_task_btn.pack(pady=20, fill="x", padx=20)
 
     def _toggle_focus_slider(self):
@@ -176,6 +179,18 @@ class TaskFrame(ctk.CTkFrame):
             )
             btn.pack(side="left", padx=5, pady=5)
             self.tag_buttons[tag] = btn
+
+    def refresh_tags(self):
+        selected_titles = {tag.title.casefold() for tag in self.selected_tags}
+        for child in self.tags_frame.winfo_children():
+            child.destroy()
+        self.available_tags = list(datas.tags_list)
+        self.selected_tags = [tag for tag in self.available_tags if tag.title.casefold() in selected_titles]
+        self.tag_buttons.clear()
+        self._create_tag_buttons()
+        for tag in self.selected_tags:
+            color = self._rgb_to_hex(tag.color) if tag.color else "#1f6aa5"
+            self.tag_buttons[tag].configure(fg_color=color)
 
     def _rgb_to_hex(self, rgb_tuple):
         return f'#{rgb_tuple[0]:02x}{rgb_tuple[1]:02x}{rgb_tuple[2]:02x}'
@@ -273,6 +288,9 @@ class TaskFrame(ctk.CTkFrame):
             new_task.focus = int(self.focus_slider.get())
 
         new_task.description = self.desc_entry.get("0.0", "end").strip()
+        if not new_task.description:
+            self.submit_status.configure(text="Wpisz opis zadania przed dodaniem.", text_color="#ef6461")
+            return
         new_task.priority = int(self.priority_slider.get())
 
         # Pobieranie daty i czasu z menu rozwijanych
@@ -285,8 +303,14 @@ class TaskFrame(ctk.CTkFrame):
         new_task.deadline = f"{year}-{month}-{day}T{hour}:{minute}:00"
         new_task.tags = self.selected_tags
 
-        # Wywołanie funkcji z datas.py
-        datas.add_task(new_task, autofill_focus, autofill_time)
+        try:
+            datas.add_task(new_task, autofill_focus, autofill_time)
+        except Exception as error:
+            self.submit_status.configure(text=f"Nie zapisano zadania: {error}", text_color="#ef6461")
+            return
+        self.submit_status.configure(text=f"Dodano zadanie [{new_task.id}]. Możesz dodać następne.", text_color="#59c3a5")
+        if self.on_task_added:
+            self.on_task_added()
 
         self._clear_form()
 
