@@ -6,7 +6,7 @@ from calendar_my import CalendarFrame
 from task import Task, TaskFrame
 from tag import Tag
 from week_periods import WeeklySchedule
-
+from datas import current_tasks_list
 
 
 
