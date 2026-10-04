@@ -151,6 +151,11 @@ class OptimizationConfig:
     tag_mismatch_scale_unit: float = 1.0      # Number of slots (or units) per exponential step
     tag_mismatch_scale_by_priority: bool = True  # Whether to multiply tag mismatch penalty by task priority
 
+    # Tag prioritization settings (specific tag assigned firstly to tasks with same tag)
+    assign_same_tag_first: bool = True        # If True, tasks with matching tags are assigned first to specific tagged slots
+    strict_tag_reservation: bool = True       # If True, prevents non-matching tasks from occupying tagged slots while matching tasks remain unassigned
+    matching_tag_bonus: float = 5.0           # Score bonus when placing a task into a slot matching its own tag
+
     # Meal scheduling settings
     enable_meals: bool = True
     meals_per_day: int = 3
@@ -731,6 +736,8 @@ def decode_permutation_to_schedule(
     Decodes an ordered permutation of task indices into concrete time slots
     in the WeeklySchedule, parsing and respecting meal times, physical activities,
     and tag constraints.
+
+    Enforces that to specific tagged slots, tasks with the same tag are assigned firstly.
     """
     schedule = Schedule(weekly_schedule)
 
@@ -759,13 +766,43 @@ def decode_permutation_to_schedule(
             air_quality_weight=getattr(config, "activity_air_quality_weight", 1.0)
         )
 
-    # 3. Place tasks around meals, activities, and reserved windows
+    # 3. Determine task execution order: assign tasks matching schedule tags first
+    assign_same_tag_first = getattr(config, "assign_same_tag_first", True)
+    strict_tag_reservation = getattr(config, "strict_tag_reservation", True)
+    matching_tag_bonus = float(getattr(config, "matching_tag_bonus", 5.0))
+
+    if assign_same_tag_first:
+        # Determine all tag identifiers present in the weekly schedule
+        sched_tag_ids = set()
+        for d in range(DAYS_IN_WEEK):
+            for s in range(SLOTS_PER_DAY):
+                slot_tags = weekly_schedule._slots[d][s]
+                if slot_tags:
+                    sched_tag_ids.update(tag_identifiers(slot_tags))
+
+        # Split permutation: tasks matching any schedule tag go first
+        matching_tasks = []
+        other_tasks = []
+        for idx in permutation:
+            t = tasks[idx]
+            if tag_identifiers(t.tags) & sched_tag_ids:
+                matching_tasks.append(idx)
+            else:
+                other_tasks.append(idx)
+        task_execution_order = matching_tasks + other_tasks
+    else:
+        task_execution_order = list(permutation)
+
+    remaining_unassigned_indices = list(task_execution_order)
+
+    # 4. Place tasks around meals, activities, and reserved windows
     penalize_mismatch = getattr(config, "penalize_tag_mismatch", True)
     growth = max(1.001, float(getattr(config, "tag_mismatch_growth_rate", 1.5)))
     base_mismatch_p = float(getattr(config, "tag_mismatch_base_penalty", 10.0))
     scale_by_prio = getattr(config, "tag_mismatch_scale_by_priority", True)
 
-    for task_idx in permutation:
+    for task_idx in task_execution_order:
+        remaining_unassigned_indices.remove(task_idx)
         task = tasks[task_idx]
         duration_minutes = get_task_duration_minutes(task, config.default_task_duration_minutes)
         slots_needed = max(1, math.ceil(duration_minutes / SLOT_MINUTES))
@@ -798,25 +835,43 @@ def decode_permutation_to_schedule(
                 strictly_compatible = True
                 matched_window_tags: List[Tag] = []
                 mismatched_slots = 0
+                matched_slots_count = 0
+                window_tag_ids = set()
 
                 for slot_idx in range(s, e):
                     slot_tags = weekly_schedule._slots[day][slot_idx]
                     if not slot_tags:
                         all_have_tags = False
                     is_match, matched = match_tags(task.tags, slot_tags)
+                    if is_match and task.tags:
+                        matched_slots_count += 1
                     if not is_match and task.tags:
                         strictly_compatible = False
                     matched_window_tags.extend(matched)
                     window_slot_tags.extend(slot_tags)
 
-                    # Count slots with alien tags (tags not belonging to the task)
                     if slot_tags:
-                        alien_tags = [st for st in slot_tags if not (tag_identifiers([st]) & task_tag_ids)]
+                        slot_t_ids = tag_identifiers(slot_tags)
+                        window_tag_ids.update(slot_t_ids)
+                        # Count slots with alien tags (tags not belonging to the task)
+                        alien_tags = [st for st in slot_tags if not (slot_t_ids & task_tag_ids)]
                         if alien_tags:
                             mismatched_slots += 1
 
                 if config.only_tagged_slots and not all_have_tags:
                     continue
+
+                # Enforce condition: to a specific tag, tasks with the same tag are assigned firstly
+                has_matching_tag = bool(task_tag_ids & window_tag_ids)
+                if assign_same_tag_first and strict_tag_reservation and window_tag_ids and not has_matching_tag:
+                    # Check if there are other unassigned tasks that have this specific tag
+                    other_matching_exist = any(
+                        bool(tag_identifiers(tasks[rem_i].tags) & window_tag_ids)
+                        for rem_i in remaining_unassigned_indices
+                    )
+                    if other_matching_exist:
+                        # This tagged slot window is reserved for tasks that have this specific tag!
+                        continue
 
                 # Average productivity in window
                 avg_prod = sum(productivity_curve.get_value(day, slot_i) for slot_i in range(s, e)) / slots_needed
@@ -840,7 +895,13 @@ def decode_permutation_to_schedule(
                             # Misses deadline
                             deadline_factor = -abs(diff_hours) / 12.0
 
-                tag_bonus = 0.5 if strictly_compatible else 0.0
+                if matched_slots_count > 0:
+                    # Bonus scales with the proportion of matching tagged slots in the window
+                    tag_bonus = matching_tag_bonus * (matched_slots_count / slots_needed)
+                elif strictly_compatible:
+                    tag_bonus = 0.5
+                else:
+                    tag_bonus = 0.0
 
                 # Combine factors according to placement_bias
                 if placement_bias == "earliest":
@@ -1300,6 +1361,7 @@ def optimize_schedule(
          - Mixed combinations of both.
          - Meal blocks respecting duration, counts, and spacing limits.
          - Physical activities avoiding bad weather and poor air quality.
+         - Assigning tasks with matching tags first to slots with specific tags.
       2. Scores all generated schedules with the passed scoring function(s).
       3. Generates consecutive populations using Partially Mapped Crossover (PMX)
          and mutation.

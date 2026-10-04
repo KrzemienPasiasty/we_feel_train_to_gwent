@@ -101,6 +101,154 @@ class TestScheduleOptimizer(unittest.TestCase):
         self.assertEqual(focus_ind.placement_bias, "productivity")
         self.assertEqual(focus_ind.permutation[0], 4)
 
+    def test_specific_tag_assigned_firstly_to_matching_tasks(self):
+        """
+        Verify that to slots with a specific tag, tasks with the same tag
+        are assigned firstly, before untagged tasks or tasks with other tags.
+        """
+        ws = WeeklySchedule()
+        work_tag = Tag("Work")
+        work_tag.title = "Work"
+        study_tag = Tag("Study")
+        study_tag.title = "Study"
+
+        # Monday 09:00 - 11:00 has tag "Work"
+        ws.assign(0, time(9, 0), time(11, 0), work_tag)
+        # Tuesday 09:00 - 11:00 has tag "Study"
+        ws.assign(1, time(9, 0), time(11, 0), study_tag)
+
+        ref_date = datetime(2026, 10, 5, 0, 0)
+
+        # Task 1: Untagged task with an urgent deadline (Monday 10:00)
+        t_untagged = Task()
+        t_untagged.id = 1
+        t_untagged.description = "Urgent general chore"
+        t_untagged.time = 60
+        t_untagged.deadline = ref_date + timedelta(hours=10)
+        t_untagged.tags = []
+
+        # Task 2: Work task with a later deadline (Friday)
+        t_work = Task()
+        t_work.id = 2
+        t_work.description = "Important company work"
+        t_work.time = 60
+        t_work.deadline = ref_date + timedelta(days=4)
+        t_work.tags = [work_tag]
+
+        # Task 3: Study task with a later deadline (Friday)
+        t_study = Task()
+        t_study.id = 3
+        t_study.description = "Exam preparation"
+        t_study.time = 60
+        t_study.deadline = ref_date + timedelta(days=4)
+        t_study.tags = [study_tag]
+
+        tasks = [t_untagged, t_work, t_study]
+        cfg = OptimizationConfig(
+            reference_date=ref_date,
+            assign_same_tag_first=True,
+            strict_tag_reservation=True,
+            enable_meals=False
+        )
+
+        # Decode permutation starting with untagged task [0, 1, 2]
+        decoded = decode_permutation_to_schedule(
+            permutation=[0, 1, 2],
+            tasks=tasks,
+            weekly_schedule=ws,
+            productivity_curve=ProductivityCurve([0.5] * 96),
+            config=cfg
+        )
+
+        work_assignment = decoded.task_assignments.get(2)
+        study_assignment = decoded.task_assignments.get(3)
+        untagged_assignment = decoded.task_assignments.get(1)
+
+        # Task 2 (Work) MUST be assigned to the Work slots (Monday 09:00 - 11:00)
+        self.assertIsNotNone(work_assignment)
+        self.assertEqual(work_assignment.day, 0)
+        self.assertEqual(work_assignment.start_time, time(9, 0))
+
+        # Task 3 (Study) MUST be assigned to the Study slots (Tuesday 09:00 - 11:00)
+        self.assertIsNotNone(study_assignment)
+        self.assertEqual(study_assignment.day, 1)
+        self.assertEqual(study_assignment.start_time, time(9, 0))
+
+        # Task 1 (Untagged) should NOT take the Work or Study slot before matching tasks
+        self.assertIsNotNone(untagged_assignment)
+        # Should be placed outside Monday 9-10 and Tuesday 9-10
+        self.assertFalse(
+            (untagged_assignment.day == 0 and untagged_assignment.start_time == time(9, 0)) or
+            (untagged_assignment.day == 1 and untagged_assignment.start_time == time(9, 0)),
+            "Untagged task stole tagged slots from matching tasks!"
+        )
+
+    def test_multiple_tasks_with_same_tag_fill_tagged_slots_first(self):
+        """
+        Verify that multiple tasks with the same tag claim all available slots
+        of that tag before any non-matching tasks can touch them.
+        """
+        ws = WeeklySchedule()
+        work_tag = Tag("Work")
+        work_tag.title = "Work"
+
+        # Monday 09:00 - 12:00 has tag "Work" (3 hours = three 60-min slots)
+        ws.assign(0, time(9, 0), time(12, 0), work_tag)
+
+        ref_date = datetime(2026, 10, 5, 0, 0)
+
+        # Non-matching task with very early deadline
+        t_other = Task()
+        t_other.id = 999
+        t_other.description = "Urgent non-work errand"
+        t_other.time = 60
+        t_other.deadline = ref_date + timedelta(hours=9, minutes=30)
+        t_other.tags = []
+
+        # 3 tasks with "Work" tag
+        work_tasks = []
+        for i in range(3):
+            t = Task()
+            t.id = i + 10
+            t.description = f"Work item {i + 1}"
+            t.time = 60
+            t.deadline = ref_date + timedelta(days=3)
+            t.tags = [work_tag]
+            work_tasks.append(t)
+
+        tasks = [t_other] + work_tasks  # t_other is index 0
+        cfg = OptimizationConfig(
+            reference_date=ref_date,
+            assign_same_tag_first=True,
+            strict_tag_reservation=True,
+            enable_meals=False
+        )
+
+        decoded = decode_permutation_to_schedule(
+            permutation=[0, 1, 2, 3],
+            tasks=tasks,
+            weekly_schedule=ws,
+            productivity_curve=ProductivityCurve([0.5] * 96),
+            config=cfg
+        )
+
+        # Check all three work tasks are assigned in the Monday 9:00 - 12:00 window
+        assigned_work_hours = set()
+        for t in work_tasks:
+            st = decoded.task_assignments.get(t.id)
+            self.assertIsNotNone(st, f"Work task {t.id} was not assigned!")
+            self.assertEqual(st.day, 0)
+            self.assertTrue(time(9, 0) <= st.start_time < time(12, 0))
+            assigned_work_hours.add(st.start_time.hour)
+
+        self.assertEqual(assigned_work_hours, {9, 10, 11})
+
+        # t_other must NOT be in Monday 9-12
+        st_other = decoded.task_assignments.get(999)
+        self.assertIsNotNone(st_other)
+        if st_other.day == 0:
+            self.assertFalse(time(9, 0) <= st_other.start_time < time(12, 0))
+
     def test_full_optimization_run(self):
         """Run full schedule optimization with custom scoring and convergence."""
         tag_study = Tag("Study")
